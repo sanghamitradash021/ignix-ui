@@ -51,6 +51,16 @@
     /* cyan-600 */
     --info-foreground: #ffffff;
 
+    /* Floating Dock */
+    --dock-solid: #1e293b;
+    --dock-solid-foreground: #f8fafc;
+    --dock-glass: rgba(255, 255, 255, 0.12);
+    --dock-outlined-border: #cbd5e1;
+    --dock-neon-bg: #0f172a;
+    --dock-neon-glow: 210 100% 60%;
+    --dock-icon-bg: #334155;
+    --dock-icon-hover: #475569;
+    --dock-separator: #94a3b8;
   }
 
   .dark {
@@ -100,6 +110,17 @@
     --info-dark: #0e7490;
     /* cyan-600 */
     --info-foreground: #ffffff;
+
+    /* Floating Dock */
+    --dock-solid: #1e293b;
+    --dock-solid-foreground: #f8fafc;
+    --dock-glass: rgba(255, 255, 255, 0.08);
+    --dock-outlined-border: #334155;
+    --dock-neon-bg: #020617;
+    --dock-neon-glow: 210 100% 60%;
+    --dock-icon-bg: #1e293b;
+    --dock-icon-hover: #334155;
+    --dock-separator: #475569;
   }
 }
 
@@ -139,6 +160,17 @@
   --color-info-light: var(--info-light);
   --color-info-dark: var(--info-dark);
   --color-info-foreground: var(--info-foreground);
+
+  /* Floating Dock */
+  --color-dock-solid: var(--dock-solid);
+  --color-dock-solid-foreground: var(--dock-solid-foreground);
+  --color-dock-glass: var(--dock-glass);
+  --color-dock-outlined-border: var(--dock-outlined-border);
+  --color-dock-neon-bg: var(--dock-neon-bg);
+  --color-dock-neon-glow: var(--dock-neon-glow);
+  --color-dock-icon-bg: var(--dock-icon-bg);
+  --color-dock-icon-hover: var(--dock-icon-hover);
+  --color-dock-separator: var(--dock-separator);
 }
 
 /* scrollbar css - three column layout */
