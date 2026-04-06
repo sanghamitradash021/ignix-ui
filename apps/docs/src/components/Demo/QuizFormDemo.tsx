@@ -35,6 +35,10 @@ export const QuizFormDemo = () => {
         setTheme(colorMode === 'dark' ? 'dark' : 'light');
     }, [colorMode]);
 
+    const isCardVariant = (v: string): v is CardVariantType => {
+        return cardVariants.includes(v as CardVariantType);
+    };
+
     const generateCodeString = () => {
         const stepLabelsStr = isOnboarding ? `\n    stepLabels={['Role', 'Team', 'Goals', 'Experience']}` : '';
         
@@ -80,7 +84,10 @@ const questions = [
                     variants={[...cardVariants]}
                     selectedVariant={cardVariant}
                     onSelectVariant={(v) => {
-                        setCardVariant(v as CardVariantType)
+                        if (!isCardVariant(v)) return;
+                      
+                        setCardVariant(v);
+                      
                         if (v === 'dark') setTheme('dark');
                         else setTheme(colorMode === 'dark' ? 'dark' : 'light');
                     }}

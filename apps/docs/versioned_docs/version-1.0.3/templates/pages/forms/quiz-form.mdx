@@ -6,7 +6,7 @@ description: A composable multi-step quiz and survey form with animated transiti
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import { QuizFormDemo, CompoundDemo } from '@site/src/components/Demo/QuizFormDemo';
+import { QuizFormDemo } from '@site/src/components/Demo/QuizFormDemo';
 import CodeBlock from '@theme/CodeBlock';
 
 The **QuizForm** component provides a fully animated, multi-step survey and onboarding form interface. It supports single-choice, multiple-choice, and star/numeric rating questions, with a token-based variant system that makes adding new visual styles a zero-logic-change operation.
@@ -23,7 +23,7 @@ The **QuizForm** component provides a fully animated, multi-step survey and onbo
 </TabItem>
 <TabItem value="manual" label="Manual">
     ```tsx
-    // Dependencies: framer-motion, class-variance-authority, lucide-react
+    // Dependencies: framer-motion, class-variance-authority, @radix-ui/react-icons
     // Copy index.tsx to your components directory and adjust the cn import path.
     ```
 </TabItem>
@@ -39,7 +39,7 @@ The **QuizForm** component provides a fully animated, multi-step survey and onbo
 | `onSubmit` | `(answers: QuizAnswers) => void` | — | **Required.** Called with all answers when the user submits. |
 | `onStepChange` | `(step: number, total: number) => void` | `undefined` | Fires on every navigation step change. |
 | `initialAnswers` | `QuizAnswers` | `{}` | Pre-populate answers (e.g. editing a previous submission). |
-| `cardVariant` | `'default' \| 'gradient' \| 'bordered'` | `'default'` | Visual style of the question card. |
+| `cardVariant` | `'default' \| 'gradient' \| 'bordered' \| 'dark'` | `'default'` | Visual style of the question card. |
 | `showResult` | `boolean` | `true` | Show a results summary page after submission. |
 | `stepLabels` | `string[]` | `undefined` | Short labels rendered as pill-progress above the bar (onboarding mode). |
 | `submitLabel` | `string` | `'Submit'` | Label for the submit button on the last question. |

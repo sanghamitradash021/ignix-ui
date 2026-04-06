@@ -16,9 +16,9 @@ import { cn } from '@site/src/utils/cn';
 ============================================ */
 
 export type QuestionType = 'single' | 'multiple' | 'rating';
-export type QuizAnswers = Record<string, any>;
+export type AnswerValue = string | string[] | number | undefined;
+export type QuizAnswers = Record<string, AnswerValue>;
 export type CardVariantType = 'default' | 'gradient' | 'bordered' | 'dark';
-export type ThemeVariant = 'dark' | 'light';
 export type ThemeType = 'light' | 'dark';
 
 export interface Question {
@@ -237,12 +237,9 @@ const VARIANT_TOKENS: Record<CardVariantType, VariantTokens> = {
 };
 
 const tok = (variant: CardVariantType, theme: ThemeType) => {
-    if (theme === 'dark') return DARK;
-  
-    // gradient stays same (already dark-friendly)
-    if (variant === 'gradient') return VARIANT_TOKENS[variant];
-  
-    return VARIANT_TOKENS[variant];
+  if (theme === 'dark') return DARK;
+
+  return VARIANT_TOKENS[variant];
 };
 
 /* ============================================
@@ -309,7 +306,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ className }) => {
       {stepLabels && stepLabels.length > 0 && (
         <div className="flex gap-2 mb-4">
           {stepLabels.map((label, i) => (
-            <div key={label} className="flex-1 flex flex-col items-center gap-1">
+            <div key={`step-${i}`} className="flex-1 flex flex-col items-center gap-1">
               <div className={cn('w-full h-1 rounded-full transition-all duration-500', i <= step ? t.stepActive : t.stepInactive)} />
               <span className={cn(
                 'text-[10px] font-semibold transition-colors',
