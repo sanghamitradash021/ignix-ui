@@ -154,8 +154,8 @@ function ActiveDot({
 }) {
     const dotStyles = {
         solid: "bg-dock-solid-foreground/70",
-        glass: "bg-dock-icon-hover shadow-[0_0_8px_rgba(255,255,255,0.4)]",
-        outlined: "bg-dock-icon-hover",
+        glass: "bg-dock-solid-foreground/70 shadow-[0_0_8px_rgba(255,255,255,0.4)]",
+        outlined: "bg-dock-solid-foreground/70 shadow-[0_0_8px_rgba(255,255,255,0.4)]",
         neon: "bg-dock-outlined-border shadow-[0_0_8px_hsl(var(--dock-neon-glow)/0.8)]",
     };
 
