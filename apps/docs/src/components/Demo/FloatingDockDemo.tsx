@@ -95,7 +95,7 @@ const items = [
 
             <Tabs>
                 <TabItem value="preview" label="Preview">
-                    <div className={`p-12 border rounded-lg mt-4 flex items-center justify-center min-h-[300px] ${variant === 'neon' ? 'bg-[#03020a]' : variant === 'glass' ? 'bg-slate-50 dark:bg-slate-900 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]' : ''}`}>
+                    <div className={`p-12 border rounded-lg mt-4 flex items-center justify-center min-h-[300px] ${variant === 'glass' ? 'bg-slate-50 dark:bg-slate-900' : ''}`}>
                         <FloatingDock
                             items={items}
                             variant={variant as any}
