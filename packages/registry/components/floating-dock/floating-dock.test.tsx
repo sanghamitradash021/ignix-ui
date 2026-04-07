@@ -105,7 +105,7 @@ describe("FloatingDock", () => {
             const items = makeItems(3);
             render(<FloatingDock items={items} />);
             items.forEach(({ label }) =>
-                expect(screen.getByRole("button", { name: label })).toBeInTheDocument()
+                expect(screen.getByLabelText(label)).toBeInTheDocument()
             );
         });
 
@@ -229,19 +229,19 @@ describe("FloatingDock", () => {
 
     describe("active state", () => {
         it("sets aria-pressed=true on active item", () => {
-            const items: DockItem[] = [{ id: "home", label: "Home", icon: <span />, active: true }];
+            const items: DockItem[] = [{ id: "home", label: "Home", icon: <span />, active: true, onClick: vi.fn() }];
             render(<FloatingDock items={items} />);
             expect(screen.getByRole("button", { name: "Home" })).toHaveAttribute("aria-pressed", "true");
         });
 
         it("sets aria-current='true' on active item", () => {
-            const items: DockItem[] = [{ id: "home", label: "Home", icon: <span />, active: true }];
+            const items: DockItem[] = [{ id: "home", label: "Home", icon: <span />, active: true, onClick: vi.fn() }];
             render(<FloatingDock items={items} />);
             expect(screen.getByRole("button", { name: "Home" })).toHaveAttribute("aria-current", "true");
         });
 
-        it("does not set aria-pressed on inactive item", () => {
-            const items: DockItem[] = [{ id: "home", label: "Home", icon: <span />, active: false }];
+        it("does not set aria-pressed on inactive button item", () => {
+            const items: DockItem[] = [{ id: "home", label: "Home", icon: <span />, active: false, onClick: vi.fn() }];
             render(<FloatingDock items={items} />);
             expect(screen.getByRole("button", { name: "Home" })).toHaveAttribute("aria-pressed", "false");
         });
@@ -276,12 +276,17 @@ describe("FloatingDock", () => {
             expect(onClick).toHaveBeenCalledTimes(1);
         });
 
-        it("does not throw when onClick is not provided", async () => {
-            const items: DockItem[] = [{ id: "a", label: "A", icon: <span /> }];
+        it("does not throw when onClick is provided but some items lack it", async () => {
+            const onClick = vi.fn();
+            const items: DockItem[] = [
+                { id: "a", label: "A", icon: <span />, onClick },
+                { id: "b", label: "B", icon: <span /> },
+            ];
             render(<FloatingDock items={items} />);
-            await expect(
-                userEvent.click(screen.getByRole("button", { name: "A" }))
-            ).resolves.not.toThrow();
+            await userEvent.click(screen.getByLabelText("A"));
+            expect(onClick).toHaveBeenCalledTimes(1);
+
+            await expect(userEvent.click(screen.getByLabelText("B"))).resolves.not.toThrow();
         });
     });
 
@@ -361,9 +366,9 @@ describe("FloatingDock", () => {
     });
 
     describe("reorderable", () => {
-        it("renders a Reorder.Group when reorderable=true", () => {
+        it("renders all item icons when reorderable=true", () => {
             render(<FloatingDock items={makeItems(3)} reorderable />);
-            expect(screen.getAllByRole("button")).toHaveLength(3);
+            expect(screen.getAllByTestId(/^icon-/)).toHaveLength(3);
         });
 
         it("renders a plain div when reorderable=false (default)", () => {
@@ -391,7 +396,7 @@ describe("FloatingDock", () => {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(savedOrder));
 
             render(<FloatingDock items={items} reorderable storageKey={STORAGE_KEY} />);
-            expect(screen.getAllByRole("button")).toHaveLength(3);
+            expect(screen.getAllByTestId(/^icon-/)).toHaveLength(3);
         });
 
         it("does not crash when localStorage contains invalid JSON", () => {
@@ -419,32 +424,32 @@ describe("FloatingDock", () => {
         it("adds a new item when items prop grows", () => {
             const items = makeItems(2);
             const { rerender } = render(<FloatingDock items={items} />);
-            expect(screen.getAllByRole("button")).toHaveLength(2);
+            expect(screen.getAllByTestId(/^icon-/)).toHaveLength(2);
 
-            const newItems = [...items, { id: "item-99", label: "New", icon: <span /> }];
+            const newItems = [...items, { id: "item-99", label: "New", icon: <span data-testid="icon-99" /> }];
             rerender(<FloatingDock items={newItems} />);
-            expect(screen.getAllByRole("button")).toHaveLength(3);
-            expect(screen.getByRole("button", { name: "New" })).toBeInTheDocument();
+            expect(screen.getAllByTestId(/^icon-/)).toHaveLength(3);
+            expect(screen.getByLabelText("New")).toBeInTheDocument();
         });
 
         it("removes an item when items prop shrinks", () => {
             const items = makeItems(3);
             const { rerender } = render(<FloatingDock items={items} />);
-            expect(screen.getAllByRole("button")).toHaveLength(3);
+            expect(screen.getAllByTestId(/^icon-/)).toHaveLength(3);
 
             rerender(<FloatingDock items={items.slice(0, 2)} />);
-            expect(screen.getAllByRole("button")).toHaveLength(2);
-            expect(screen.queryByRole("button", { name: "Item 2" })).toBeNull();
+            expect(screen.getAllByTestId(/^icon-/)).toHaveLength(2);
+            expect(screen.queryByLabelText("Item 2")).toBeNull();
         });
 
         it("updates item labels when items prop changes", () => {
             const items = makeItems(1);
             const { rerender } = render(<FloatingDock items={items} />);
-            expect(screen.getByRole("button", { name: "Item 0" })).toBeInTheDocument();
+            expect(screen.getByLabelText("Item 0")).toBeInTheDocument();
 
             const updated = [{ ...items[0], label: "Updated Label" }];
             rerender(<FloatingDock items={updated} />);
-            expect(screen.getByRole("button", { name: "Updated Label" })).toBeInTheDocument();
+            expect(screen.getByLabelText("Updated Label")).toBeInTheDocument();
         });
     });
 
@@ -458,18 +463,31 @@ describe("FloatingDock", () => {
     });
 
     describe("accessibility", () => {
-        it("all items are keyboard-focusable (tabIndex=0)", () => {
-            render(<FloatingDock items={makeItems(3)} />);
-            screen.getAllByRole("button").forEach((btn) => {
-                expect(btn).toHaveAttribute("tabindex", "0");
-            });
+        it("only interactive items are keyboard-focusable (tabIndex=0)", () => {
+            const items: DockItem[] = [
+                { id: "a", label: "Clickable", icon: <span />, onClick: vi.fn() },
+                { id: "b", label: "Static", icon: <span /> },
+            ];
+            render(<FloatingDock items={items} />);
+            expect(screen.getByLabelText("Clickable")).toHaveAttribute("tabindex", "0");
+            expect(screen.getByLabelText("Static")).not.toHaveAttribute("tabindex");
+        });
+
+        it("only interactive items have role='button'", () => {
+            const items: DockItem[] = [
+                { id: "a", label: "Clickable", icon: <span />, onClick: vi.fn() },
+                { id: "b", label: "Static", icon: <span /> },
+            ];
+            render(<FloatingDock items={items} />);
+            expect(screen.getByRole("button", { name: "Clickable" })).toBeInTheDocument();
+            expect(screen.queryByRole("button", { name: "Static" })).toBeNull();
         });
 
         it("each item has an aria-label matching its label", () => {
             const items = makeItems(3);
             render(<FloatingDock items={items} />);
             items.forEach(({ label }) =>
-                expect(screen.getByRole("button", { name: label })).toHaveAttribute("aria-label", label)
+                expect(screen.getByLabelText(label)).toBeInTheDocument()
             );
         });
 

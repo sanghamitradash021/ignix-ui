@@ -61,7 +61,7 @@
     --dock-icon-bg: #334155;
     --dock-icon-hover: #475569;
     --dock-separator: #94a3b8;
-    --dock-outlined-dot: #64748b;
+    --dock-outlined-dot: #0f172a;
   }
 
   .dark {
@@ -122,7 +122,7 @@
     --dock-icon-bg: #1e293b;
     --dock-icon-hover: #334155;
     --dock-separator: #475569;
-    --dock-outlined-dot: #94a3b8;
+    --dock-outlined-dot: #f1f5f9;
   }
 }
 

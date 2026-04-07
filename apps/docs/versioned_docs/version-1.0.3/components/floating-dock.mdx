@@ -56,20 +56,43 @@ const dockVariants = cva("flex mx-auto w-fit", {
 });
 
 const iconVariants = cva(
-    "flex items-center justify-center rounded-xl cursor-pointer transition-colors duration-150 relative",
+    "flex items-center justify-center rounded-xl transition-colors duration-150 relative",
     {
         variants: {
             variant: {
-                solid:
-                    "bg-dock-icon-bg hover:bg-dock-icon-hover text-dock-solid-foreground",
-                outlined:
-                    "border border-dock-outlined-border text-foreground hover:bg-dock-icon-bg/20",
-                glass:
-                    "bg-dock-icon-bg/50 backdrop-blur-sm hover:bg-dock-icon-hover/60 text-dock-solid-foreground",
-                neon: "bg-dock-neon-bg text-[hsl(var(--dock-neon-glow))] border border-dock-neon-glow/20 [filter:drop-shadow(0_0_5px_hsl(var(--dock-neon-glow)/0.3))] hover:border-dock-neon-glow/60 hover:shadow-[0_0_12px_-2px_hsl(var(--dock-neon-glow)/0.5)]",
+                solid: "bg-dock-icon-bg text-dock-solid-foreground",
+                outlined: "border border-dock-outlined-border text-foreground",
+                glass: "bg-dock-icon-bg/50 backdrop-blur-sm text-dock-solid-foreground",
+                neon: "bg-dock-neon-bg text-[hsl(var(--dock-neon-glow))] border border-dock-neon-glow/20 [filter:drop-shadow(0_0_5px_hsl(var(--dock-neon-glow)/0.3))]",
+            },
+            interactive: {
+                true: "cursor-pointer",
+                false: "",
             },
         },
-        defaultVariants: { variant: "solid" },
+        compoundVariants: [
+            {
+                variant: "solid",
+                interactive: true,
+                class: "hover:bg-dock-icon-hover",
+            },
+            {
+                variant: "outlined",
+                interactive: true,
+                class: "hover:bg-dock-icon-bg/20",
+            },
+            {
+                variant: "glass",
+                interactive: true,
+                class: "hover:bg-dock-icon-hover/60",
+            },
+            {
+                variant: "neon",
+                interactive: true,
+                class: "hover:border-dock-neon-glow/60 hover:shadow-[0_0_12px_-2px_hsl(var(--dock-neon-glow)/0.5)]",
+            },
+        ],
+        defaultVariants: { variant: "solid", interactive: false },
     }
 );
 
@@ -262,6 +285,9 @@ function DockIconInner({
             : "ring-1 ring-dock-solid-foreground/10 bg-dock-icon-hover"
         : "";
 
+    const isInteractive = !!item.onClick;
+    const focusRingClass = isInteractive ? "focus-visible:ring-2 focus-visible:ring-dock-neon-glow/60" : "";
+
     const iconEl = (
         <motion.div
             ref={ref}
@@ -270,22 +296,24 @@ function DockIconInner({
                 height: orientation === "vertical" ? slotSize : baseIconSize,
             }}
             className={cn(
-                "relative flex justify-center outline-none focus-visible:ring-2 focus-visible:ring-dock-neon-glow/60",
+                "relative flex justify-center outline-none",
+                focusRingClass,
                 orientation === "horizontal" ? "items-end" : "items-center",
                 isDragging && "z-50"
             )}
             onClick={item.onClick}
             onKeyDown={(e) => {
+                if (!isInteractive) return;
                 if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     item.onClick?.();
                 }
             }}
-            tabIndex={0}
-            role="button"
+            tabIndex={isInteractive ? 0 : undefined}
+            role={isInteractive ? "button" : undefined}
             aria-label={item.label}
             aria-current={item.active ? "true" : undefined}
-            aria-pressed={item.active}
+            aria-pressed={isInteractive ? (item.active ? "true" : "false") : undefined}
         >
             <motion.div
                 style={{
@@ -295,7 +323,7 @@ function DockIconInner({
                     transformOrigin: orientation === "horizontal" ? "bottom" : "center",
                     ...colorStyle,
                 }}
-                className={cn(iconVariants({ variant }), activeRingClass)}
+                className={cn(iconVariants({ variant, interactive: isInteractive }), activeRingClass)}
             >
                 {item.icon}
                 {item.badge != null && item.badge > 0 && (
