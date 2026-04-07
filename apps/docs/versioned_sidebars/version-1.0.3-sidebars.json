@@ -85,11 +85,11 @@
           "items": [
             "components/breadcrumbs",
             "components/drawer",
+            "components/floating-dock",
             "components/navbar",
             "components/sidebar",
             "components/stepper",
-            "components/tab",
-            "components/floating-dock"
+            "components/tab"
           ]
         },
         {
