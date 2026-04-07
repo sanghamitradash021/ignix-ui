@@ -82,6 +82,7 @@
   --dock-icon-bg: #334155;
   --dock-icon-hover: #475569;
   --dock-separator: #94a3b8;
+  --dock-outlined-dot: #0f172a; /* slate-900 */
 }
 
 [data-theme='dark'] {
@@ -165,6 +166,7 @@
   --dock-icon-bg: #1e293b;
   --dock-icon-hover: #334155;
   --dock-separator: #475569;
+  --dock-outlined-dot: #f1f5f9; /* slate-100 */
 }
 
 /* html[data-theme='dark'] {
@@ -242,6 +244,7 @@
   --color-dock-icon-bg: var(--dock-icon-bg);
   --color-dock-icon-hover: var(--dock-icon-hover);
   --color-dock-separator: var(--dock-separator);
+  --color-dock-outlined-dot: var(--dock-outlined-dot);
   @keyframes shine {
     0% {
       background-position: 0% 0%;

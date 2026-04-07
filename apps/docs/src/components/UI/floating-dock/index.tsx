@@ -156,7 +156,7 @@ function ActiveDot({
     const dotStyles = {
         solid: "bg-dock-solid-foreground/70",
         glass: "bg-dock-solid-foreground/70 shadow-[0_0_8px_rgba(255,255,255,0.4)]",
-        outlined: "bg-dock-solid-foreground/70 shadow-[0_0_8px_rgba(255,255,255,0.4)]",
+        outlined: "bg-dock-outlined-dot shadow-[0_0_8px_rgba(0,0,0,0.1)]",
         neon: "bg-dock-solid-foreground/70 shadow-[0_0_8px_hsl(var(--dock-neon-glow)/0.8)]",
     };
 
@@ -175,9 +175,9 @@ function ActiveDot({
                 x: orientation === "horizontal" ? "-50%" : 0,
             }}
             className={cn(
-                "absolute rounded-full w-1.5 h-1.5 pointer-events-none",
+                "absolute rounded-full w-1 h-1 pointer-events-none",
                 dotColor,
-                orientation === "horizontal" ? "-bottom-3" : "top-1/2 -translate-y-1/2"
+                orientation === "horizontal" ? "-bottom-2" : "top-1/2 -translate-y-1/2"
             )}
         />
     );
