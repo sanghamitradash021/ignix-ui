@@ -131,7 +131,7 @@ describe("Accordion Component", () => {
 
     it("responds to keyboard navigation", async () => {
         const user = userEvent.setup();
-        render(<AccordionDemo />);
+        render(<AccordionDemo collapsible />);
 
         const trigger = screen.getByRole("button", { name: /is it accessible/i });
         trigger.focus();
@@ -140,6 +140,7 @@ describe("Accordion Component", () => {
         expect(trigger).toHaveAttribute("data-state", "open");
 
         await user.keyboard(" ");
+        expect(trigger).toHaveAttribute("data-state", "closed");
     });
 
     it("handles different animation variants without crashing", () => {

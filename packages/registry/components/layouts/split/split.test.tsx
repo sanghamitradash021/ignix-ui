@@ -1,3 +1,4 @@
+import type { ComponentProps } from "react";
 import { describe, it, expect, vi } from "vitest";
 import "@testing-library/jest-dom";
 import { render, screen, fireEvent } from "@testing-library/react";
@@ -7,7 +8,7 @@ describe("Split Component", () => {
     const LeftContent = () => <div data-testid="left-content">Left Panel</div>;
     const RightContent = () => <div data-testid="right-content">Right Panel</div>;
 
-    const renderSplit = (props = {}) =>
+    const renderSplit = (props: Partial<ComponentProps<typeof Split>> = {}) =>
         render(
             <Split {...props}>
                 <LeftContent />

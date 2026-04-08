@@ -10,6 +10,21 @@ import {
   FeatureCard,
   StatCard
 } from "./index";
+import { vi } from "vitest";
+
+vi.mock("framer-motion", () => ({
+  motion: {
+    div: React.forwardRef(({ children, ...props }: any, ref: any) => (
+      <div {...props} ref={ref}>{children}</div>
+    )),
+    h3: React.forwardRef(({ children, ...props }: any, ref: any) => (
+      <h3 {...props} ref={ref}>{children}</h3>
+    )),
+    p: React.forwardRef(({ children, ...props }: any, ref: any) => (
+      <p {...props} ref={ref}>{children}</p>
+    )),
+  },
+}));
 
 describe("Card Components", () => {
   describe("Card", () => {

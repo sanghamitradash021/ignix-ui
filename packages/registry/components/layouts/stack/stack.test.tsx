@@ -5,7 +5,7 @@ import { Stack, type StackProps } from "./index";
 
 describe("Stack Component", () => {
   const renderStack = (props: Partial<StackProps> = {}, children: React.ReactNode = <div>Item</div>) =>
-    render(<Stack {...(props as any)}>{children}</Stack>);
+    render(<Stack {...props}>{children}</Stack>);
 
   const getStack = () => screen.getByText(/Item/i).parentElement as HTMLElement;
 

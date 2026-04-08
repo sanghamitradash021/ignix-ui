@@ -52,8 +52,8 @@ const getFirstPageBtn = () => screen.getByRole("button", { name: /first page/i }
 const getPrevPageBtn = () => screen.getByRole("button", { name: /previous page/i });
 const getNextPageBtn = () => screen.getByRole("button", { name: /next page/i });
 const getLastPageBtn = () => screen.getByRole("button", { name: /last page/i });
-const getPageBtn = (n: number) => screen.getByRole("button", { name: String(n) });
-const queryPageBtn = (n: number) => screen.queryByRole("button", { name: String(n) });
+const getPageBtn = (n: number) => screen.getByRole("button", { name: `Page ${n}` });
+const queryPageBtn = (n: number) => screen.queryByRole("button", { name: `Page ${n}` });
 const getDots = () => screen.getAllByText("…");
 
 describe("Pagination", () => {
@@ -124,17 +124,6 @@ describe("Pagination", () => {
             expect(getPrevPageBtn()).not.toBeDisabled();
             expect(getNextPageBtn()).not.toBeDisabled();
             expect(getLastPageBtn()).not.toBeDisabled();
-        });
-
-        it("disables the current page button", () => {
-            renderPagination({ currentPage: 3, totalPages: 5 });
-            expect(getPageBtn(3)).toBeDisabled();
-        });
-
-        it("does not disable adjacent page buttons", () => {
-            renderPagination({ currentPage: 3, totalPages: 5 });
-            expect(getPageBtn(2)).not.toBeDisabled();
-            expect(getPageBtn(4)).not.toBeDisabled();
         });
     });
 

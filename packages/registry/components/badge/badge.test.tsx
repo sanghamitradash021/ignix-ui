@@ -68,8 +68,12 @@ describe("Badge rendering", () => {
 
   it("renders a gradient overlay div with aria-hidden", () => {
     const { container } = renderBadge();
-    const overlay = container.querySelector("[aria-hidden='true']");
-    expect(overlay).toBeInTheDocument();
+    const overlay = container.querySelector("div[aria-hidden='true']");
+    expect(overlay).toHaveClass(
+      "bg-gradient-to-t",
+      "rounded-full",
+      "pointer-events-none"
+    );
   });
 });
 

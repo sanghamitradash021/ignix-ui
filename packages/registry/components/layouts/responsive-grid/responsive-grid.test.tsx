@@ -4,6 +4,20 @@ import { render, screen } from "@testing-library/react";
 import ResponsiveGrid from "./index";
 import React from "react";
 
+vi.mock("framer-motion", async () => {
+    const React = await import("react");
+    return {
+        motion: {
+            div: React.forwardRef(({ children, transition, ...props }: any, ref: any) => (
+                <div {...props} ref={ref} data-transition={JSON.stringify(transition)}>
+                    {children}
+                </div>
+            )),
+        },
+        AnimatePresence: ({ children }: any) => <>{children}</>,
+    };
+});
+
 const renderGrid = (props: any = {}, children: React.ReactNode = <div>item</div>) =>
     render(<ResponsiveGrid {...props}>{children}</ResponsiveGrid>);
 
@@ -125,8 +139,15 @@ describe("ResponsiveGrid", () => {
                 <div key="1" data-testid="item-1">Item 1</div>,
                 <div key="2" data-testid="item-2">Item 2</div>,
             ]);
-            expect(screen.getByTestId("item-1")).toBeInTheDocument();
-            expect(screen.getByTestId("item-2")).toBeInTheDocument();
+
+            const item1Wrapper = screen.getByTestId("item-1").parentElement;
+            const item2Wrapper = screen.getByTestId("item-2").parentElement;
+
+            const transition1 = JSON.parse(item1Wrapper?.getAttribute("data-transition") || "{}");
+            const transition2 = JSON.parse(item2Wrapper?.getAttribute("data-transition") || "{}");
+
+            expect(transition1.delay).toBe(0);
+            expect(transition2.delay).toBe(0.1);
         });
     });
 });

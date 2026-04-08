@@ -52,6 +52,8 @@ vi.mock("framer-motion", () => {
 
 const getNav = () => screen.getByRole("navigation");
 
+type NavbarProps = React.ComponentProps<typeof Navbar>;
+
 describe("Navbar rendering", () => {
   it("renders a <nav> element", () => {
     render(<Navbar />);
@@ -84,7 +86,7 @@ describe("Navbar rendering", () => {
 });
 
 describe("Navbar variant classes", () => {
-  const variantCases: Array<[string, string]> = [
+  const variantCases: Array<[NonNullable<NavbarProps["variant"]>, string]> = [
     ["default", "bg-background"],
     ["dark", "bg-card"],
     ["transparent", "bg-transparent"],
@@ -100,7 +102,7 @@ describe("Navbar variant classes", () => {
 });
 
 describe("Navbar size classes", () => {
-  const sizeCases: Array<[string, string]> = [
+  const sizeCases: Array<[NonNullable<NavbarProps["size"]>, string]> = [
     ["sm", "h-12"],
     ["md", "h-16"],
     ["lg", "h-20"],
