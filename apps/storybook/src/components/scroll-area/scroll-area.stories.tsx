@@ -27,7 +27,7 @@ const meta = {
         },
         fadeMask: {
             control: 'select',
-            options: ['top', 'bottom', 'fade', 'none'],
+            options: ['top', 'bottom', 'fade', 'auto', 'none'],
         },
         autoHide: {
             control: 'boolean',
@@ -189,6 +189,49 @@ export const FadeMasks: Story = {
                 <div className="p-4 text-sm font-semibold">Fade (Both) Masks</div>
                 <VerticalContent />
             </ScrollArea>
+            <ScrollArea className="h-72 w-48 rounded-md border" fadeMask="auto">
+                <div className="p-4 text-sm font-semibold">Auto (Dynamic)</div>
+                <VerticalContent />
+            </ScrollArea>
+        </div>
+    ),
+};
+
+export const AutoFadeMask: Story = {
+    render: () => (
+        <div className="flex flex-col gap-6">
+            <div>
+                <p className="mb-2 text-sm text-muted-foreground">
+                    Scroll to see the fade appear/disappear at each edge dynamically.
+                </p>
+                <div className="flex gap-4">
+                    <ScrollArea className="h-72 w-48 rounded-md border" fadeMask="auto">
+                        <div className="p-4 text-sm font-semibold">Vertical Auto</div>
+                        <VerticalContent />
+                    </ScrollArea>
+                    <ScrollArea className="w-96 whitespace-nowrap rounded-md border" orientation="horizontal" fadeMask="auto">
+                        <div className="p-4 text-sm font-semibold">Horizontal Auto</div>
+                        <HorizontalContent />
+                    </ScrollArea>
+                </div>
+            </div>
+            <div>
+                <p className="mb-2 text-sm text-muted-foreground">
+                    Both orientations — vertical and horizontal fades compose via mask-composite.
+                </p>
+                <ScrollArea className="h-72 w-96 rounded-md border" orientation="both" fadeMask="auto">
+                    <BothContent />
+                </ScrollArea>
+            </div>
+            <div>
+                <p className="mb-2 text-sm text-muted-foreground">
+                    Combined with scroll buttons and progress bar.
+                </p>
+                <ScrollArea className="h-72 w-48 rounded-md border" fadeMask="auto" showScrollButtons showProgress>
+                    <div className="p-4 text-sm font-semibold">All Features</div>
+                    <VerticalContent />
+                </ScrollArea>
+            </div>
         </div>
     ),
 };
@@ -254,7 +297,15 @@ export const ScrollButtonsWithFeatures: Story = {
                 showScrollButtons
                 fadeMask="fade"
             >
-                <div className="p-4 text-sm font-semibold">With Fade Mask</div>
+                <div className="p-4 text-sm font-semibold">With Static Fade</div>
+                <VerticalContent />
+            </ScrollArea>
+            <ScrollArea
+                className="h-72 w-48 rounded-md border"
+                showScrollButtons
+                fadeMask="auto"
+            >
+                <div className="p-4 text-sm font-semibold">With Auto Fade</div>
                 <VerticalContent />
             </ScrollArea>
         </div>

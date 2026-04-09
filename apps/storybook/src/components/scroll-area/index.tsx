@@ -74,10 +74,10 @@ function getThumbClasses(variant: string | undefined | null) {
 }
 
 function getFadeMaskStyle(
-    fadeMask: "top" | "bottom" | "fade" | "none" | undefined | null
+    fadeMask: "top" | "bottom" | "fade" | "auto" | "none" | undefined | null
 ): React.CSSProperties | undefined {
-    if (!fadeMask || fadeMask === "none") return undefined;
-    const size = "30px";
+    if (!fadeMask || fadeMask === "none" || fadeMask === "auto") return undefined;
+    const size = "56px";
     const t = "transparent";
     const b = "black";
     switch (fadeMask) {
@@ -120,7 +120,7 @@ export interface ScrollAreaProps
     extends React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>,
     VariantProps<typeof scrollbarVariants> {
     orientation?: "vertical" | "horizontal" | "both";
-    fadeMask?: "top" | "bottom" | "fade" | "none";
+    fadeMask?: "top" | "bottom" | "fade" | "auto" | "none";
     autoHide?: boolean;
     animation?: "fade" | "slide" | "scale" | "none";
     showProgress?: boolean;
@@ -179,6 +179,60 @@ const ScrollArea = React.forwardRef<
             setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - threshold);
         }, []);
 
+        const computeAutoFadeMask = React.useCallback(() => {
+            const el = internalViewportRef.current;
+            if (!el) return;
+
+            const FADE_PX = 56;
+            const showV = orientation === "vertical" || orientation === "both";
+            const showH = orientation === "horizontal" || orientation === "both";
+            const masks: string[] = [];
+
+            if (showV) {
+                const maxV = el.scrollHeight - el.clientHeight;
+                if (maxV > 0) {
+                    const topStop = Math.min(el.scrollTop / FADE_PX, 1) * FADE_PX;
+                    const botStop = Math.min((maxV - el.scrollTop) / FADE_PX, 1) * FADE_PX;
+                    if (topStop > 0.5 || botStop > 0.5) {
+                        masks.push(
+                            `linear-gradient(to bottom, transparent, black ${topStop}px, black calc(100% - ${botStop}px), transparent)`
+                        );
+                    }
+                }
+            }
+
+            if (showH) {
+                const maxH = el.scrollWidth - el.clientWidth;
+                if (maxH > 0) {
+                    const leftStop = Math.min(el.scrollLeft / FADE_PX, 1) * FADE_PX;
+                    const rightStop = Math.min((maxH - el.scrollLeft) / FADE_PX, 1) * FADE_PX;
+                    if (leftStop > 0.5 || rightStop > 0.5) {
+                        masks.push(
+                            `linear-gradient(to right, transparent, black ${leftStop}px, black calc(100% - ${rightStop}px), transparent)`
+                        );
+                    }
+                }
+            }
+
+            if (masks.length > 0) {
+                const val = masks.join(", ");
+                el.style.maskImage = val;
+                el.style.webkitMaskImage = val;
+                if (masks.length > 1) {
+                    el.style.maskComposite = "intersect";
+                    (el.style as unknown as Record<string, string>)["webkitMaskComposite"] = "source-in";
+                } else {
+                    el.style.maskComposite = "";
+                    (el.style as unknown as Record<string, string>)["webkitMaskComposite"] = "";
+                }
+            } else {
+                el.style.maskImage = "";
+                el.style.webkitMaskImage = "";
+                el.style.maskComposite = "";
+                (el.style as unknown as Record<string, string>)["webkitMaskComposite"] = "";
+            }
+        }, [orientation]);
+
         const handleScroll = React.useCallback(() => {
             const el = internalViewportRef.current;
             if (!el) return;
@@ -197,7 +251,11 @@ const ScrollArea = React.forwardRef<
             if (showScrollButtons) {
                 computeEdges();
             }
-        }, [showProgress, autoHide, showScrollButtons, computeEdges]);
+
+            if (fadeMask === "auto") {
+                computeAutoFadeMask();
+            }
+        }, [showProgress, autoHide, showScrollButtons, fadeMask, computeEdges, computeAutoFadeMask]);
 
         React.useEffect(() => {
             const el = internalViewportRef.current;
@@ -216,6 +274,33 @@ const ScrollArea = React.forwardRef<
             if (el.firstElementChild) ro.observe(el.firstElementChild);
             return () => ro.disconnect();
         }, [showScrollButtons, computeEdges]);
+
+        /* Init + ResizeObserver for auto-fade mask OR apply static mask */
+        React.useEffect(() => {
+            const el = internalViewportRef.current;
+            if (!el) return;
+
+            if (fadeMask === "auto") {
+                computeAutoFadeMask();
+                const ro = new ResizeObserver(() => computeAutoFadeMask());
+                ro.observe(el);
+                if (el.firstElementChild) ro.observe(el.firstElementChild);
+                return () => ro.disconnect();
+            } else {
+                const staticStyle = getFadeMaskStyle(fadeMask);
+                if (staticStyle && staticStyle.maskImage) {
+                    el.style.maskImage = staticStyle.maskImage as string;
+                    el.style.webkitMaskImage = staticStyle.WebkitMaskImage as string;
+                    el.style.maskComposite = "";
+                    (el.style as unknown as Record<string, string>)["webkitMaskComposite"] = "";
+                } else {
+                    el.style.maskImage = "";
+                    el.style.webkitMaskImage = "";
+                    el.style.maskComposite = "";
+                    (el.style as unknown as Record<string, string>)["webkitMaskComposite"] = "";
+                }
+            }
+        }, [fadeMask, computeAutoFadeMask]);
 
         const scrollToEdge = React.useCallback(
             (direction: "up" | "down" | "left" | "right") => {
@@ -242,7 +327,6 @@ const ScrollArea = React.forwardRef<
         );
 
         const anim = entranceVariants[animation];
-        const fadeMaskStyle = getFadeMaskStyle(fadeMask);
 
         const overflowClass =
             orientation === "horizontal"
@@ -271,7 +355,6 @@ const ScrollArea = React.forwardRef<
                 <ScrollAreaPrimitive.Viewport
                     ref={setViewportRef}
                     className={cn("h-full w-full rounded-[inherit]", overflowClass)}
-                    style={fadeMaskStyle}
                 >
                     {anim ? (
                         <AnimatePresence>
@@ -337,6 +420,7 @@ const ScrollArea = React.forwardRef<
                     </>
                 )}
 
+
                 <ScrollAreaPrimitive.Corner />
             </ScrollAreaPrimitive.Root>
         );
@@ -394,7 +478,7 @@ const ScrollBar = React.forwardRef<
 );
 ScrollBar.displayName = "ScrollBar";
 
-/* ─── Scroll-to-edge button ────────────────────────────────── */
+// Scroll to Edge button
 
 const edgeIcons = {
     up: ChevronUpIcon,
@@ -404,10 +488,8 @@ const edgeIcons = {
 } as const;
 
 const edgePositionClasses: Record<string, string> = {
-    /* vertical: hug the right edge, inline with the vertical scrollbar track */
     up: "top-1 right-0.5",
     down: "bottom-1 right-0.5",
-    /* horizontal: hug the bottom edge, inline with the horizontal scrollbar track */
     left: "bottom-0.5 left-1",
     right: "bottom-0.5 right-1",
 };
