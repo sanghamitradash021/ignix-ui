@@ -72,10 +72,12 @@ function getTrackClasses(
     const finalVClass = expandOnHover ? vClass : vClass.split(" ")[0];
     const finalHClass = expandOnHover ? hClass : hClass.split(" ")[0];
 
+    const paddingClass = (v === "line" || v === "hidden") ? "p-0" : "p-[1px]";
+
     if (orientation === "vertical") {
-        return `h-full border-l border-l-transparent p-[1px] ${finalVClass}`;
+        return `h-full border-l border-l-transparent ${paddingClass} ${finalVClass}`;
     }
-    return `flex-col border-t border-t-transparent p-[1px] ${finalHClass}`;
+    return `flex-col border-t border-t-transparent ${paddingClass} ${finalHClass}`;
 }
 
 function getThumbClasses(variant: string | undefined | null) {
