@@ -92,7 +92,7 @@ function getFadeMaskStyle(
     fadeMask: "top" | "bottom" | "fade" | "auto" | "none" | undefined | null
 ): React.CSSProperties | undefined {
     if (!fadeMask || fadeMask === "none" || fadeMask === "auto") return undefined;
-    const size = "56px";
+    const size = "40px";
     const t = "transparent";
     const b = "black";
     switch (fadeMask) {
