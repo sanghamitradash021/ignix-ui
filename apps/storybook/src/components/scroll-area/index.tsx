@@ -22,10 +22,10 @@ const scrollbarVariants = cva(
                 hidden: "!opacity-0 !w-0 !h-0 pointer-events-none",
             },
             thumbColor: {
-                default: "[&>div]:bg-border hover:[&>div]:bg-muted-foreground/50",
-                subtle: "[&>div]:bg-muted-foreground/20 hover:[&>div]:bg-muted-foreground/40",
-                accent: "[&>div]:bg-primary/50 hover:[&>div]:bg-primary/80",
-                contrast: "[&>div]:bg-foreground/40 hover:[&>div]:bg-foreground/60",
+                default: "[&>div]:bg-muted-foreground/40 hover:[&>div]:bg-muted-foreground/60",
+                subtle: "[&>div]:bg-muted-foreground/20 hover:[&>div]:bg-muted-foreground/35",
+                accent: "[&>div]:bg-primary/70 hover:[&>div]:bg-primary/90",
+                contrast: "[&>div]:bg-foreground/70 hover:[&>div]:bg-foreground/90",
             },
             size: {
                 sm: "",
@@ -206,7 +206,6 @@ const ScrollArea = React.forwardRef<
             return () => el.removeEventListener("scroll", handleScroll);
         }, [handleScroll]);
 
-        // compute scroll edges on mount and when content size changes
         React.useEffect(() => {
             if (!showScrollButtons) return;
             const el = internalViewportRef.current;

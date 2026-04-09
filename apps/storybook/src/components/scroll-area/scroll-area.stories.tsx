@@ -51,7 +51,7 @@ type Story = StoryObj<typeof meta>;
 const VerticalContent = () => (
     <div className="p-4">
         <h4 className="mb-4 text-sm font-medium leading-none">Settings Menu</h4>
-        {Array.from({ length: 100 }).map((_, i) => (
+        {Array.from({ length: 20 }).map((_, i) => (
             <div key={i} className="text-sm my-2">
                 Setting item {i + 1}
                 <hr className="my-2 border-border" />
