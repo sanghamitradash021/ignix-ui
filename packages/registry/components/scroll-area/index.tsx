@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import { cva, type VariantProps } from "class-variance-authority";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type HTMLMotionProps } from "framer-motion";
 import {
     ChevronUpIcon,
     ChevronDownIcon,
@@ -467,6 +467,7 @@ interface ScrollBarProps
     orientation?: "vertical" | "horizontal";
     forceVisible?: boolean;
     expandOnHover?: boolean;
+    motionProps?: Omit<HTMLMotionProps<"div">, "className">;
 }
 
 const ScrollBar = React.forwardRef<
@@ -482,6 +483,7 @@ const ScrollBar = React.forwardRef<
             size,
             forceVisible = true,
             expandOnHover = true,
+            motionProps,
             ...props
         },
         ref
@@ -493,6 +495,7 @@ const ScrollBar = React.forwardRef<
             forceMount
         >
             <motion.div
+                {...motionProps}
                 initial={false}
                 animate={{ opacity: forceVisible ? 1 : 0 }}
                 transition={{ duration: 0.3 }}
