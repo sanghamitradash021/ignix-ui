@@ -255,7 +255,6 @@
                 "templates/pages/forms/advanced-search-form",
                 "templates/pages/forms/dynamic-form",
                 "templates/pages/forms/contact-form",
-                "templates/pages/forms/advanced-search-form",
                 "templates/pages/forms/multi-step-form"
               ]
             }
