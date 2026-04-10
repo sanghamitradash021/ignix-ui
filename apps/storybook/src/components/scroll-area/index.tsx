@@ -173,6 +173,7 @@ const ScrollArea = React.forwardRef<
         const [canScrollDown, setCanScrollDown] = React.useState(false);
         const [canScrollLeft, setCanScrollLeft] = React.useState(false);
         const [canScrollRight, setCanScrollRight] = React.useState(false);
+        const [autoMaskStyle, setAutoMaskStyle] = React.useState<React.CSSProperties>({});
         const hideTimer = React.useRef<ReturnType<typeof setTimeout>>(undefined);
         const internalViewportRef = React.useRef<HTMLDivElement>(null);
 
@@ -231,24 +232,30 @@ const ScrollArea = React.forwardRef<
                 }
             }
 
-            if (masks.length > 0) {
-                const val = masks.join(", ");
-                el.style.maskImage = val;
-                el.style.webkitMaskImage = val;
-                if (masks.length > 1) {
-                    el.style.maskComposite = "intersect";
-                    (el.style as unknown as Record<string, string>)["webkitMaskComposite"] = "source-in";
-                } else {
-                    el.style.maskComposite = "";
-                    (el.style as unknown as Record<string, string>)["webkitMaskComposite"] = "";
-                }
-            } else {
-                el.style.maskImage = "";
-                el.style.webkitMaskImage = "";
-                el.style.maskComposite = "";
-                (el.style as unknown as Record<string, string>)["webkitMaskComposite"] = "";
+            if (masks.length === 0) {
+                setAutoMaskStyle({});
+                return;
             }
+
+            const val = masks.join(", ");
+            const composite = masks.length > 1 ? "intersect" : undefined;
+
+
+            setAutoMaskStyle({
+                maskImage: val,
+                WebkitMaskImage: val,
+                ...(composite && {
+                    maskComposite: composite,
+                    WebkitMaskComposite: "source-in"
+                }),
+            });
+
         }, [orientation]);
+
+        const viewportMaskStyle: React.CSSProperties =
+            fadeMask === "auto"
+                ? autoMaskStyle
+                : getFadeMaskStyle(fadeMask) ?? {};
 
         const handleScroll = React.useCallback(() => {
             const el = internalViewportRef.current;
@@ -303,29 +310,14 @@ const ScrollArea = React.forwardRef<
         }, [showScrollButtons, computeEdges]);
 
         React.useEffect(() => {
+            if (fadeMask !== "auto") return;
             const el = internalViewportRef.current;
             if (!el) return;
-
-            if (fadeMask === "auto") {
-                computeAutoFadeMask();
-                const ro = new ResizeObserver(() => computeAutoFadeMask());
-                ro.observe(el);
-                if (el.firstElementChild) ro.observe(el.firstElementChild);
-                return () => ro.disconnect();
-            } else {
-                const staticStyle = getFadeMaskStyle(fadeMask);
-                if (staticStyle && staticStyle.maskImage) {
-                    el.style.maskImage = staticStyle.maskImage as string;
-                    el.style.webkitMaskImage = staticStyle.WebkitMaskImage as string;
-                    el.style.maskComposite = "";
-                    (el.style as unknown as Record<string, string>)["webkitMaskComposite"] = "";
-                } else {
-                    el.style.maskImage = "";
-                    el.style.webkitMaskImage = "";
-                    el.style.maskComposite = "";
-                    (el.style as unknown as Record<string, string>)["webkitMaskComposite"] = "";
-                }
-            }
+            computeAutoFadeMask();
+            const ro = new ResizeObserver(() => computeAutoFadeMask());
+            ro.observe(el);
+            if (el.firstElementChild) ro.observe(el.firstElementChild);
+            return () => ro.disconnect();
         }, [fadeMask, computeAutoFadeMask]);
 
         const scrollToEdge = React.useCallback(
@@ -381,6 +373,7 @@ const ScrollArea = React.forwardRef<
                 <ScrollAreaPrimitive.Viewport
                     ref={setViewportRef}
                     className={cn("h-full w-full rounded-[inherit]", overflowClass)}
+                    style={viewportMaskStyle}
                 >
                     {anim ? (
                         <AnimatePresence mode="wait">
