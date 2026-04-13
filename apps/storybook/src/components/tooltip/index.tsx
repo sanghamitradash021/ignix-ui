@@ -2,7 +2,7 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../../utils/cn";
-import { ReactNode, useState } from "react";
+import { type ReactNode, useState } from "react";
 
 const motionVariants = {
   fade: {
@@ -54,7 +54,7 @@ const tooltipVariants = cva(
         light: "bg-white text-zinc-900 border-zinc-200",
         slate: "bg-slate-800 text-white border-slate-700",
         default: "bg-white text-gray-900",
-        transparent: "bg-transparent border-transparent",        
+        transparent: "bg-transparent border-transparent",
         glass: "bg-white/10 backdrop-blur-md text-blue-500",
         gradient: "bg-gradient-to-r from-blue-500 to-purple-500 text-white",
         primary: "bg-blue-400 text-white",

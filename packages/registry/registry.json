@@ -1633,6 +1633,21 @@
           "type": "template"
         }
       }
+    },
+    "floating-dock": {
+      "name": "floating-dock",
+      "description": "A floating dock component with custom variants, reorderable items, and tooltips.",
+      "dependencies": [
+        "framer-motion",
+        "@radix-ui/react-tooltip",
+        "class-variance-authority"
+      ],
+      "files": {
+        "main": {
+          "path": "components/floating-dock/index.tsx",
+          "type": "component"
+        }
+      }
     }
   }
 }

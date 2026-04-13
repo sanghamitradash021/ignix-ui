@@ -1,0 +1,593 @@
+import {
+    motion,
+    useMotionValue,
+    useSpring,
+    useTransform,
+    Reorder,
+    type MotionValue,
+} from "framer-motion";
+import { useRef, useState, useCallback, useEffect, useMemo } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import { cn } from "../../../utils/cn";
+
+
+const dockVariants = cva("flex mx-auto w-fit", {
+    variants: {
+        variant: {
+            solid: "bg-dock-solid shadow-2xl shadow-black/40",
+            outlined: "border-2 border-dock-outlined-border bg-transparent",
+            glass:
+                "bg-dock-glass backdrop-blur-xl border border-dock-outlined-border/40 shadow-2xl shadow-black/20",
+            neon: "bg-dock-neon-bg border border-dock-neon-glow/30 shadow-[0_0_30px_-5px_hsl(var(--dock-neon-glow)/0.4),inset_0_1px_0_0_hsl(var(--dock-neon-glow)/0.1)]",
+        },
+        orientation: {
+            horizontal: "flex-row items-end gap-2 md:gap-3 px-3 md:px-5 pb-2 md:pb-3 pt-3 md:pt-4 rounded-2xl",
+            vertical: "flex-col items-center gap-2 md:gap-3 py-3 md:py-5 pl-2 md:pl-3 pr-3 md:pr-4 rounded-2xl",
+        },
+    },
+    defaultVariants: { variant: "solid", orientation: "horizontal" },
+});
+
+const iconVariants = cva(
+    "flex items-center justify-center rounded-xl transition-colors duration-150 relative",
+    {
+        variants: {
+            variant: {
+                solid: "bg-dock-icon-bg text-dock-solid-foreground",
+                outlined: "border border-dock-outlined-border text-foreground",
+                glass: "bg-dock-icon-bg/50 backdrop-blur-sm text-dock-solid-foreground",
+                neon: "bg-dock-neon-bg text-[hsl(var(--dock-neon-glow))] border border-dock-neon-glow/20 [filter:drop-shadow(0_0_5px_hsl(var(--dock-neon-glow)/0.3))]",
+            },
+            interactive: {
+                true: "cursor-pointer",
+                false: "",
+            },
+        },
+        compoundVariants: [
+            {
+                variant: "solid",
+                interactive: true,
+                class: "hover:bg-dock-icon-hover",
+            },
+            {
+                variant: "outlined",
+                interactive: true,
+                class: "hover:bg-dock-icon-bg/20",
+            },
+            {
+                variant: "glass",
+                interactive: true,
+                class: "hover:bg-dock-icon-hover/60",
+            },
+            {
+                variant: "neon",
+                interactive: true,
+                class: "hover:border-dock-neon-glow/60 hover:shadow-[0_0_12px_-2px_hsl(var(--dock-neon-glow)/0.5)]",
+            },
+        ],
+        defaultVariants: { variant: "solid", interactive: false },
+    }
+);
+
+export interface DockItem {
+    id: string;
+    icon: React.ReactNode;
+    label: string;
+    onClick?: () => void;
+    separator?: boolean;
+    active?: boolean;
+    badge?: number;
+    color?: string;
+}
+
+type Variant = "solid" | "outlined" | "glass" | "neon";
+type Orientation = "horizontal" | "vertical";
+
+interface FloatingDockProps extends VariantProps<typeof dockVariants> {
+    items: DockItem[];
+    className?: string;
+    reorderable?: boolean;
+    onReorder?: (items: DockItem[]) => void;
+    storageKey?: string;
+}
+
+// DockSeparator
+function DockSeparator({
+    orientation,
+    variant,
+}: {
+    orientation: Orientation;
+    variant: Variant;
+}) {
+    const colourClass =
+        variant === "neon" ? "bg-dock-outlined-border shadow-[0_0_8px_hsl(var(--dock-neon-glow)/0.8)]" : "bg-dock-separator/60";
+
+    return orientation === "horizontal" ? (
+        <div
+            className={cn("w-px self-stretch my-2 shrink-0 rounded-full", colourClass)}
+            role="separator"
+            aria-orientation="vertical"
+        />
+    ) : (
+        <div
+            className={cn("h-px self-stretch mx-2 shrink-0 rounded-full", colourClass)}
+            role="separator"
+            aria-orientation="horizontal"
+        />
+    );
+}
+
+// DockTooltip
+function DockTooltip({
+    label,
+    orientation,
+    children,
+}: {
+    label: string;
+    orientation: Orientation;
+    children: React.ReactNode;
+}) {
+    return (
+        <TooltipPrimitive.Provider delayDuration={200}>
+            <TooltipPrimitive.Root>
+                <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
+                <TooltipPrimitive.Portal>
+                    <TooltipPrimitive.Content
+                        side={orientation === "horizontal" ? "top" : "right"}
+                        sideOffset={40}
+                        className={cn(
+                            "z-50 flex items-center rounded-md px-2.5 py-1 text-xs font-medium shadow-lg",
+                            "bg-dock-icon-bg text-dock-solid-foreground",
+                            "animate-in fade-in-0 zoom-in-95",
+                            "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+                            "data-[side=top]:slide-in-from-bottom-2",
+                            "data-[side=right]:slide-in-from-left-2"
+                        )}
+                    >
+                        {label}
+                        <TooltipPrimitive.Arrow className="fill-dock-icon-bg" />
+                    </TooltipPrimitive.Content>
+                </TooltipPrimitive.Portal>
+            </TooltipPrimitive.Root>
+        </TooltipPrimitive.Provider>
+    );
+}
+
+// DockBadge
+function DockBadge({ count }: { count: number }) {
+    const display = count > 99 ? "99+" : String(count);
+    return (
+        <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold leading-none px-1 pointer-events-none z-10">
+            {display}
+        </span>
+    );
+}
+
+// ActiveDot
+function ActiveDot({
+    orientation,
+    variant,
+    iconScale,
+    baseIconSize,
+}: {
+    orientation: Orientation;
+    variant: Variant;
+    iconScale: MotionValue<number>;
+    baseIconSize: number;
+}) {
+    const dotStyles = {
+        solid: "bg-dock-solid-foreground/70",
+        glass: "bg-dock-solid-foreground/70 shadow-[0_0_8px_rgba(255,255,255,0.4)]",
+        outlined: "bg-dock-outlined-dot shadow-[0_0_8px_rgba(0,0,0,0.1)]",
+        neon: "bg-dock-solid-foreground/70 shadow-[0_0_8px_hsl(var(--dock-neon-glow)/0.8)]",
+    };
+
+    const dotColor = dotStyles[variant];
+
+    const dynamicOffset = useTransform(iconScale, (s: number) => {
+        if (orientation === "horizontal") return 0;
+        const halfWidth = (baseIconSize / 2) * s;
+        return halfWidth + (baseIconSize / 2) + 8;
+    });
+
+    return (
+        <motion.span
+            style={{
+                left: orientation === "horizontal" ? "50%" : dynamicOffset,
+                x: orientation === "horizontal" ? "-50%" : 0,
+            }}
+            className={cn(
+                "absolute rounded-full w-1 h-1 pointer-events-none",
+                dotColor,
+                orientation === "horizontal" ? "-bottom-2" : "top-1/2 -translate-y-1/2"
+            )}
+        />
+    );
+}
+
+// DockIconInner
+
+function DockIconInner({
+    item,
+    variant,
+    orientation,
+    mousePos,
+    isDragging,
+    baseIconSize,
+    maxIconSize,
+}: {
+    item: DockItem;
+    variant: Variant;
+    orientation: Orientation;
+    mousePos: ReturnType<typeof useMotionValue<number>>;
+    isDragging: boolean;
+    baseIconSize: number;
+    maxIconSize: number;
+}) {
+    const ref = useRef<HTMLDivElement>(null);
+
+    const distance = useTransform(mousePos, (val: number) => {
+        const bounds = ref.current?.getBoundingClientRect() ?? {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+        };
+        return orientation === "horizontal"
+            ? val - bounds.x - bounds.width / 2
+            : val - bounds.y - bounds.height / 2;
+    });
+
+    const slotSize = useSpring(
+        useTransform(distance, [-150, 0, 150], [baseIconSize, maxIconSize, baseIconSize]),
+        { mass: 0.15, stiffness: 150, damping: 25 }
+    );
+
+    const iconScale = useTransform(slotSize, (s) => s / baseIconSize);
+
+    const colorStyle: React.CSSProperties | undefined = item.color
+        ? {
+            backgroundColor: `color-mix(in srgb, ${item.color}, transparent 0%)`,
+            borderColor: `color-mix(in srgb, ${item.color}, transparent 10%)`,
+        }
+        : undefined;
+
+    const activeRingClass = item.active
+        ? variant === "neon"
+            ? "ring-3 ring-dock-neon-glow/50 bg-dock-neon-bg shadow-[0_0_8px_hsl(var(--dock-neon-glow)/0.4)]"
+            : "ring-1 ring-dock-solid-foreground/10 bg-dock-icon-hover"
+        : "";
+
+    const isInteractive = !!item.onClick;
+    const focusRingClass = isInteractive ? "focus-visible:ring-2 focus-visible:ring-dock-neon-glow/60" : "";
+
+    const iconEl = (
+        <motion.div
+            ref={ref}
+            style={{
+                width: orientation === "horizontal" ? slotSize : baseIconSize,
+                height: orientation === "vertical" ? slotSize : baseIconSize,
+            }}
+            className={cn(
+                "relative flex justify-center outline-none",
+                focusRingClass,
+                orientation === "horizontal" ? "items-end" : "items-center",
+                isDragging && "z-50"
+            )}
+            onClick={item.onClick}
+            onKeyDown={(e) => {
+                if (!isInteractive) return;
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    item.onClick?.();
+                }
+            }}
+            tabIndex={isInteractive ? 0 : undefined}
+            role={isInteractive ? "button" : undefined}
+            aria-label={item.label}
+            aria-current={item.active ? "true" : undefined}
+            aria-pressed={isInteractive ? (item.active ? "true" : "false") : undefined}
+        >
+            <motion.div
+                style={{
+                    width: baseIconSize,
+                    height: baseIconSize,
+                    scale: iconScale,
+                    transformOrigin: orientation === "horizontal" ? "bottom" : "center",
+                    ...colorStyle,
+                }}
+                className={cn(iconVariants({ variant, interactive: isInteractive }), activeRingClass)}
+            >
+                {item.icon}
+                {item.badge != null && item.badge > 0 && (
+                    <DockBadge count={item.badge} />
+                )}
+            </motion.div>
+
+            {item.active && (
+                <ActiveDot
+                    orientation={orientation}
+                    variant={variant}
+                    iconScale={iconScale}
+                    baseIconSize={baseIconSize}
+                />
+            )}
+        </motion.div>
+    );
+
+    if (isDragging) return iconEl;
+
+    return (
+        <DockTooltip label={item.label} orientation={orientation}>
+            {iconEl}
+        </DockTooltip>
+    );
+}
+
+// ReorderableItem
+
+function ReorderableItem({
+    item,
+    variant,
+    orientation,
+    mousePos,
+    baseIconSize,
+    maxIconSize,
+}: {
+    item: DockItem;
+    variant: Variant;
+    orientation: Orientation;
+    mousePos: ReturnType<typeof useMotionValue<number>>;
+    baseIconSize: number;
+    maxIconSize: number;
+}) {
+    const [isDragging, setIsDragging] = useState(false);
+    const itemId = item.id;
+
+    return (
+        <>
+            {item.separator && (
+                <DockSeparator orientation={orientation} variant={variant} />
+            )}
+            <Reorder.Item
+                as="div"
+                value={itemId}
+                onDragStart={() => setIsDragging(true)}
+                onDragEnd={() => setIsDragging(false)}
+                style={{ listStyle: "none" }}
+                className={cn("relative", isDragging && "z-50 scale-110")}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                layout
+            >
+                <DockIconInner
+                    item={item}
+                    variant={variant}
+                    orientation={orientation}
+                    mousePos={mousePos}
+                    isDragging={isDragging}
+                    baseIconSize={baseIconSize}
+                    maxIconSize={maxIconSize}
+                />
+            </Reorder.Item>
+        </>
+    );
+}
+
+// StaticItem
+function StaticItem({
+    item,
+    variant,
+    orientation,
+    mousePos,
+    baseIconSize,
+    maxIconSize,
+}: {
+    item: DockItem;
+    variant: Variant;
+    orientation: Orientation;
+    mousePos: ReturnType<typeof useMotionValue<number>>;
+    baseIconSize: number;
+    maxIconSize: number;
+}) {
+    return (
+        <>
+            {item.separator && (
+                <DockSeparator orientation={orientation} variant={variant} />
+            )}
+            <div style={{ listStyle: "none" }} className="relative shrink-0">
+                <DockIconInner
+                    item={item}
+                    variant={variant}
+                    orientation={orientation}
+                    mousePos={mousePos}
+                    isDragging={false}
+                    baseIconSize={baseIconSize}
+                    maxIconSize={maxIconSize}
+                />
+            </div>
+        </>
+    );
+}
+
+export function FloatingDock({
+    items: initialItems,
+    variant = "solid",
+    orientation = "horizontal",
+    reorderable = false,
+    className,
+    onReorder,
+    storageKey,
+}: FloatingDockProps) {
+    const v = variant!;
+    const o = orientation!;
+
+    const mousePos = useMotionValue(Infinity);
+
+    const [iconSizes, setIconSizes] = useState({ base: 48, max: 90 });
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 768) {
+                setIconSizes({ base: 38, max: 65 });
+            } else {
+                setIconSizes({ base: 48, max: 90 });
+            }
+        };
+
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    const itemMap = useMemo(
+        () => new Map(initialItems.map((it) => [it.id, it])),
+        [initialItems]
+    );
+
+    const [orderedIds, setOrderedIds] = useState(() =>
+        initialItems.map((it) => it.id)
+    );
+
+    const loadedStorageKeyRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        setOrderedIds((prev) => {
+            const newIds = initialItems.map((it) => it.id);
+            let workingPrev = prev;
+
+            // Load from localStorage only once on client-side mount
+            if (storageKey && loadedStorageKeyRef.current !== storageKey) {
+                loadedStorageKeyRef.current = storageKey;
+                workingPrev = newIds;
+                try {
+                    const saved = localStorage.getItem(storageKey);
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            workingPrev = parsed;
+                        }
+                    }
+                } catch {
+                    console.warn("Could not load dock order from storage");
+                }
+            } else if (!storageKey && loadedStorageKeyRef.current !== null) {
+                loadedStorageKeyRef.current = null;
+                workingPrev = newIds;
+            }
+
+            const prevSet = new Set(workingPrev);
+            const newSet = new Set(newIds);
+
+            if (prevSet.size === newSet.size && [...prevSet].every((id) => newSet.has(id))) {
+                return workingPrev;
+            }
+
+            const nextIds = workingPrev.filter((id) => newSet.has(id));
+            for (const id of newIds) {
+                if (!prevSet.has(id)) {
+                    nextIds.push(id);
+                }
+            }
+            return nextIds;
+        });
+    }, [initialItems, storageKey]);
+
+    const handleMouseMove = useCallback(
+        (e: React.MouseEvent) => {
+            mousePos.set(o === "horizontal" ? e.clientX : e.clientY);
+        },
+        [mousePos, o]
+    );
+
+    const handleTouchMove = useCallback(
+        (e: React.TouchEvent) => {
+            const touch = e.touches?.[0];
+            if (touch) {
+                mousePos.set(o === "horizontal" ? touch.clientX : touch.clientY);
+            }
+        },
+        [mousePos, o]
+    );
+
+    const handleReorder = (newIds: string[]) => {
+        setOrderedIds(newIds);
+        if (storageKey) {
+            try {
+                localStorage.setItem(storageKey, JSON.stringify(newIds));
+            } catch (e) {
+                console.warn("Could not save dock order to storage");
+            }
+        }
+        const reordered = newIds.map((id) => itemMap.get(id)!).filter(Boolean);
+        onReorder?.(reordered);
+    };
+
+    const listClass = cn(
+        dockVariants({ variant: v, orientation: o }),
+        "list-none m-0",
+        className
+    );
+
+    const handleMouseLeave = () => mousePos.set(Infinity);
+
+    if (!reorderable) {
+        return (
+            <div
+                onMouseMove={handleMouseMove}
+                onTouchMove={handleTouchMove}
+                onMouseLeave={handleMouseLeave}
+                onTouchEnd={handleMouseLeave}
+                className={listClass}
+                role="toolbar"
+                aria-label="Dock"
+                aria-orientation={o}
+            >
+                {initialItems.map((item) => (
+                    <StaticItem
+                        key={item.id}
+                        item={item}
+                        variant={v}
+                        orientation={o}
+                        mousePos={mousePos}
+                        baseIconSize={iconSizes.base}
+                        maxIconSize={iconSizes.max}
+                    />
+                ))}
+            </div>
+        );
+    }
+
+    return (
+        <Reorder.Group
+            axis={o === "horizontal" ? "x" : "y"}
+            values={orderedIds}
+            onReorder={handleReorder}
+            as="div"
+            onMouseMove={handleMouseMove}
+            onTouchMove={handleTouchMove}
+            onMouseLeave={handleMouseLeave}
+            onTouchEnd={handleMouseLeave}
+            className={listClass}
+            role="toolbar"
+            aria-label="Dock"
+            aria-orientation={o}
+        >
+            {orderedIds.map((id) => {
+                const item = itemMap.get(id);
+                if (!item) return null;
+                return (
+                    <ReorderableItem
+                        key={id}
+                        item={item}
+                        variant={v}
+                        orientation={o}
+                        mousePos={mousePos}
+                        baseIconSize={iconSizes.base}
+                        maxIconSize={iconSizes.max}
+                    />
+                );
+            })}
+        </Reorder.Group>
+    );
+}

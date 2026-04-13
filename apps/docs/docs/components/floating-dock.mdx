@@ -1,0 +1,84 @@
+---
+sidebar_position: 18
+title: Floating Dock
+description: A macOS-style animated navigation dock built on Radix UI and Framer Motion.
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import FloatingDockDemo from '@site/src/components/Demo/FloatingDockDemo';
+
+The **FloatingDock** component is a highly interactive, animated navigation element inspired by the macOS dock. It features high-fidelity magnification, multiple visual variants, and support for badges, separators, and drag-to-reorder functionality.
+
+<FloatingDockDemo />
+
+## Installation
+
+<Tabs>
+  <TabItem value="cli" label="CLI" default>
+    ```bash
+    ignix add component floating-dock
+    ```
+  </TabItem>
+</Tabs>
+
+## Usage
+
+Import the component and pass an array of **items**:
+
+```tsx
+import { FloatingDock, type DockItem } from '@ignix-ui/floating-dock';
+import { HomeIcon, MagnifyingGlassIcon, PersonIcon } from "@radix-ui/react-icons";
+
+const items: DockItem[] = [
+  { id: "home", icon: <HomeIcon />, label: "Home", active: true },
+  { id: "search", icon: <MagnifyingGlassIcon />, label: "Search" },
+  { id: "profile", icon: <PersonIcon />, label: "Profile" },
+];
+
+function MyDock() {
+  return (
+    <FloatingDock 
+      items={items} 
+      variant="solid" 
+      orientation="horizontal" 
+    />
+  );
+}
+```
+
+### Features
+
+- **Magnification**: Smooth upward magnification on hover, mimicking the macOS dock experience.
+- **Multiple Variants**: Choose between `solid`, `glass`, `outlined`, and `neon` to match your application's theme.
+- **Orientation**: Supports both `horizontal` and `vertical` layouts.
+- **Badges**: Easily add notification counts or indicators to any dock item.
+- **Separators**: Group related items using visual dividers.
+- **Reorderable**: Enable drag-to-reorder for a customizable user experience.
+- **Per-icon Colors**: Custom background and border tinting for each individual icon.
+- **Persistent Ordering**: Automatically saves user-dragged ordering directly to `localStorage` utilizing the `storageKey` prop.
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `items` | `DockItem[]` | **required** | Array of items to be displayed in the dock. |
+| `variant` | `'solid' \| 'glass' \| 'outlined' \| 'neon'` | `'solid'` | Visual appearance of the dock. |
+| `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Layout direction of the dock. |
+| `reorderable` | `boolean` | `false` | Enables drag-to-reorder (requires Framer Motion `Reorder`). |
+| `onReorder` | `(items: DockItem[]) => void` | - | Callback triggered when items are reordered. |
+| `className` | `string` | - | Additional CSS classes for the dock container. |
+| `storageKey` | `string` | - | A unique key string. If provided, reordered item states are automatically stored and restored from `localStorage`. |
+
+### DockItem Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `id` | `string` | Unique identifier for the item. |
+| `icon` | `React.ReactNode` | The icon component to render. |
+| `label` | `string` | Tooltip text and accessible label. |
+| `onClick` | `() => void` | Event handler for click interactions. |
+| `separator` | `boolean` | Renders a visual divider before this item. |
+| `active` | `boolean` | Highlights the item as active with a dot or ring. |
+| `badge` | `number` | Displays a numeric badge (auto-caps at 99+). |
+| `color` | `string` | Custom CSS color for icon background/border tinting. |

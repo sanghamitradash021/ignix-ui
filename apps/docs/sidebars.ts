@@ -18,6 +18,7 @@ const sidebars: SidebarsConfig = {
         'components/card',
         'components/dialog-box',
         'components/dropdown',
+        'components/floating-dock',
         'components/input',
         'components/navbar',
         'components/sidebar',
