@@ -293,7 +293,7 @@ const ninaTextVariants = {
   hover: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.045, duration: 0.3, ease: [0.75, 0, 0.125, 1] },
+    transition: { delay: i * 0.045, duration: 0.3, ease: [0.75, 0, 0.125, 1] as const },
   }),
 };
 
@@ -302,7 +302,7 @@ const ninaBeforeVariants = {
   hover: {
     opacity: 0,
     y: 20,
-    transition: { duration: 0.3, ease: [0.75, 0, 0.125, 1] },
+    transition: { duration: 0.3, ease: [0.75, 0, 0.125, 1] as const },
   },
 };
 

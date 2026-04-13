@@ -6,9 +6,9 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { ChevronRight, Check, Circle, Home, ArrowRight } from "lucide-react";
 import { cn } from "../../../utils/cn";
 
-export interface BreadcrumbsProps 
+export interface BreadcrumbsProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onAnimationStart' | 'onDragStart' | 'onDragEnd' | 'onDrag'>,
-    VariantProps<typeof breadcrumbsVariants> {
+  VariantProps<typeof breadcrumbsVariants> {
   items?: { label: string; href?: string; icon?: React.ElementType }[];
   separatorIcon?: React.ElementType;
   steps?: string[];
@@ -19,7 +19,7 @@ const breadcrumbsVariants = cva("w-full", {
   variants: {
     size: {
       sm: "text-sm gap-1",
-      md: "text-base gap-2", 
+      md: "text-base gap-2",
       lg: "text-lg gap-3",
     },
     shape: {
@@ -69,9 +69,9 @@ const itemVariants = cva("relative inline-flex items-center font-medium transiti
       md: "px-3 py-1.5 text-sm",
       lg: "px-4 py-2 text-base"
     },
-    isActive: { 
+    isActive: {
       true: "text-foreground bg-background/80 shadow-sm ",
-      false: "text-muted-foreground"  
+      false: "text-muted-foreground"
     }
   },
   defaultVariants: {
@@ -81,63 +81,63 @@ const itemVariants = cva("relative inline-flex items-center font-medium transiti
   }
 });
 
-const AnimatedSeparator: React.FC<{ 
-  icon?: React.ElementType; 
+const AnimatedSeparator: React.FC<{
+  icon?: React.ElementType;
   isActive?: boolean;
   size?: "sm" | "md" | "lg";
   variant?: "text" | "step" | "progress" | "custom";
-}> = ({ 
-  icon: Icon = ChevronRight, 
+}> = ({
+  icon: Icon = ChevronRight,
   isActive = false,
   size = "md",
   variant = "text"
 }) => {
-  const sizeClasses = {
-    sm: "h-3 w-3",
-    md: "h-4 w-4", 
-    lg: "h-5 w-5"
-  };
+    const sizeClasses = {
+      sm: "h-3 w-3",
+      md: "h-4 w-4",
+      lg: "h-5 w-5"
+    };
 
-  const variantClasses = {
-    text: "mx-1 sm:mx-2",
-    step: "mx-3 sm:mx-4",
-    progress: "mx-2 sm:mx-3",
-    custom: "mx-2"
-  };
+    const variantClasses = {
+      text: "mx-1 sm:mx-2",
+      step: "mx-3 sm:mx-4",
+      progress: "mx-2 sm:mx-3",
+      custom: "mx-2"
+    };
 
-  return (
-    <motion.div
-      className={cn(
-        "flex items-center justify-center",
-        variantClasses[variant]
-      )}
-      initial={{ scale: 0.8, opacity: 0.5 }}
-      animate={{ 
-        scale: isActive ? 1.1 : 1,
-        opacity: isActive ? 1 : 0.6,
-        rotate: isActive ? [0, 10, -10, 0] : 0
-      }}
-      transition={{
-        duration: 0.3,
-        ease: "easeInOut",
-        rotate: {
-          duration: 0.6,
-          ease: "easeInOut"
-        }
-      }}
-      whileHover={{
-        scale: 1.2,
-        transition: { duration: 0.2 }
-      }}
-    >
-      <Icon className={cn(
-        sizeClasses[size],
-        "text-muted-foreground transition-colors duration-300",
-        isActive && "text-primary"
-      )} />
-    </motion.div>
-  );
-};
+    return (
+      <motion.div
+        className={cn(
+          "flex items-center justify-center",
+          variantClasses[variant]
+        )}
+        initial={{ scale: 0.8, opacity: 0.5 }}
+        animate={{
+          scale: isActive ? 1.1 : 1,
+          opacity: isActive ? 1 : 0.6,
+          rotate: isActive ? [0, 10, -10, 0] : 0
+        }}
+        transition={{
+          duration: 0.3,
+          ease: "easeInOut",
+          rotate: {
+            duration: 0.6,
+            ease: "easeInOut"
+          }
+        }}
+        whileHover={{
+          scale: 1.2,
+          transition: { duration: 0.2 }
+        }}
+      >
+        <Icon className={cn(
+          sizeClasses[size],
+          "text-muted-foreground transition-colors duration-300",
+          isActive && "text-primary"
+        )} />
+      </motion.div>
+    );
+  };
 
 const BreadcrumbItem: React.FC<{
   item: { label: string; href?: string; icon?: React.ElementType };
@@ -177,11 +177,11 @@ const BreadcrumbItem: React.FC<{
           )} />
         </motion.div>
       )}
-      
+
       <span className="truncate max-w-[120px] sm:max-w-[200px] lg:max-w-none">
         {item.label}
       </span>
-      
+
       {/* Enhanced glow effect for active items */}
       {(isLast || isActive) && (
         <motion.div
@@ -385,8 +385,7 @@ const ProgressBreadcrumbs: React.FC<{
             />
           </motion.div>
         </div>
-        
-        {/* Enhanced progress percentage */}
+
         <motion.div
           className="absolute -top-10 bg-gradient-to-br from-background/95 to-muted/30 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-lg border border-border/60 text-xs font-bold text-primary"
           initial={{ left: 0 }}
@@ -398,19 +397,18 @@ const ProgressBreadcrumbs: React.FC<{
         </motion.div>
       </div>
 
-      {/* Steps with progress variant styling */}
       <div className="flex flex-wrap items-center gap-2 sm:gap-4">
         {steps.map((step, index) => (
           <React.Fragment key={step}>
-            <StepIndicator 
-              step={step} 
-              index={index} 
+            <StepIndicator
+              step={step}
+              index={index}
               currentStep={currentStep}
               size={size}
               variant="progress"
             />
             {index < steps.length - 1 && (
-              <AnimatedSeparator 
+              <AnimatedSeparator
                 icon={ArrowRight}
                 isActive={index < currentStep}
                 size={size}
@@ -427,7 +425,7 @@ const ProgressBreadcrumbs: React.FC<{
 export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
   items = [],
   variant = "text",
-  size = "md",
+  size: rawSize = "md",
   separatorIcon: SeparatorIcon,
   steps = [],
   currentStep = 0,
@@ -435,7 +433,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
   shape,
   ...props
 }) => {
-  // Add home icon to first item if not present
+  const size = rawSize ?? "md";
   const processedItems = items.map((item, index) => ({
     ...item,
     icon: item.icon || (index === 0 ? Home : undefined)
@@ -444,7 +442,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
   return (
     <motion.nav
       className={cn(
-        breadcrumbsVariants({ size, variant, shape }), 
+        breadcrumbsVariants({ size, variant, shape }),
         className
       )}
       initial={{ opacity: 0, y: -20 }}
@@ -464,7 +462,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
                 variant={variant}
               />
               {index < processedItems.length - 1 && (
-                <AnimatedSeparator 
+                <AnimatedSeparator
                   icon={SeparatorIcon}
                   isActive={index < processedItems.length - 1}
                   size={size}
@@ -480,15 +478,15 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
         <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           {steps.map((step, index) => (
             <React.Fragment key={step}>
-              <StepIndicator 
-                step={step} 
-                index={index} 
+              <StepIndicator
+                step={step}
+                index={index}
                 currentStep={currentStep}
                 size={size}
                 variant={variant}
               />
               {index < steps.length - 1 && (
-                <AnimatedSeparator 
+                <AnimatedSeparator
                   icon={SeparatorIcon}
                   isActive={index < currentStep}
                   size={size}
@@ -501,8 +499,8 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
       )}
 
       {variant === "progress" && steps.length > 0 && (
-        <ProgressBreadcrumbs 
-          steps={steps} 
+        <ProgressBreadcrumbs
+          steps={steps}
           currentStep={currentStep}
           size={size}
         />
@@ -550,7 +548,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
                   )}
                   {item.label}
                 </motion.span>
-                
+
                 {index <= currentStep && (
                   <motion.div
                     className="absolute inset-0 -z-10 rounded-2xl"
@@ -562,7 +560,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
                 )}
               </motion.a>
               {index < processedItems.length - 1 && (
-                <AnimatedSeparator 
+                <AnimatedSeparator
                   icon={SeparatorIcon}
                   isActive={index < currentStep}
                   size={size}

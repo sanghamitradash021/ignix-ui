@@ -3,47 +3,47 @@ import * as React from "react"
 import { type HTMLMotionProps, motion } from "framer-motion"
 import { cva, type VariantProps } from "class-variance-authority"
 
+type AnimationVariant = "none" | "fadeIn" | "slideUp" | "scaleIn" | "flipIn" | "bounceIn" | "floatIn";
+
 // Card Animation Variants
-const cardAnimations = {
+const cardAnimations: Record<AnimationVariant, HTMLMotionProps<"div">> = {
   none: {},
   fadeIn: {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] }
+    transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] }
   },
   slideUp: {
     initial: { opacity: 0, y: 60, scale: 0.95 },
     animate: { opacity: 1, y: 0, scale: 1 },
-    transition: { duration: 0.7, ease: [0.4, 0, 0.2, 1] }
+    transition: { duration: 0.7, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] }
   },
   scaleIn: {
     initial: { opacity: 0, scale: 0.8, rotateX: 15 },
     animate: { opacity: 1, scale: 1, rotateX: 0 },
-    transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] }
+    transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] }
   },
   flipIn: {
     initial: { opacity: 0, rotateY: -90, scale: 0.8 },
     animate: { opacity: 1, rotateY: 0, scale: 1 },
-    transition: { duration: 0.8, ease: [0.4, 0, 0.2, 1] }
+    transition: { duration: 0.8, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] }
   },
   bounceIn: {
     initial: { opacity: 0, scale: 0.3, y: 50 },
     animate: { opacity: 1, scale: 1, y: 0 },
-    transition: { 
-      type: "spring", 
-      stiffness: 300, 
+    transition: {
+      type: "spring",
+      stiffness: 300,
       damping: 20,
-      duration: 0.8 
+      duration: 0.8
     }
   },
   floatIn: {
     initial: { opacity: 0, y: 100, rotateX: 45 },
     animate: { opacity: 1, y: 0, rotateX: 0 },
-    transition: { duration: 0.8, ease: [0.68, -0.55, 0.265, 1.55] }
+    transition: { duration: 0.8, ease: [0.68, -0.55, 0.265, 1.55] as [number, number, number, number] }
   }
 };
-
-type AnimationVariant = keyof typeof cardAnimations;
 
 // CVA Variants for Card
 const cardVariants = cva(
@@ -131,7 +131,7 @@ const cardVariants = cva(
       },
       size: {
         sm: "text-sm",
-        md: "text-base", 
+        md: "text-base",
         lg: "text-lg",
         xl: "text-xl"
       },
@@ -164,7 +164,7 @@ type CardProps = React.PropsWithChildren<
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant, size, interactive, animation = "none", asChild = false, children, ...props }, ref) => {
     const animationProps = cardAnimations[animation];
-    
+
     if (asChild) {
       return (
         <motion.div
@@ -183,16 +183,16 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         className={cn(cardVariants({ variant, size, interactive }), className)}
         {...animationProps}
         whileHover={
-          interactive !== "none" 
-            ? { 
-                scale: interactive === "tilt" ? 1.02 : undefined,
-                rotate: interactive === "tilt" ? 1 : undefined,
-                y: interactive === "lift" ? -8 : undefined 
-              }
+          interactive !== "none"
+            ? {
+              scale: interactive === "tilt" ? 1.02 : undefined,
+              rotate: interactive === "tilt" ? 1 : undefined,
+              y: interactive === "lift" ? -8 : undefined
+            }
             : undefined
         }
         whileTap={
-          interactive === "press" 
+          interactive === "press"
             ? { scale: 0.98, transition: { duration: 0.1 } }
             : undefined
         }
@@ -203,13 +203,13 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 pointer-events-none"
             initial={{ x: "-100%" }}
-            whileHover={{ 
+            whileHover={{
               x: "100%",
               transition: { duration: 0.8, ease: "easeInOut" }
             }}
           />
         )}
-        
+
         {/* Properly typed children */}
         <div className="relative z-10">
           {children}
@@ -227,7 +227,7 @@ const cardHeaderVariants = cva(
     variants: {
       variant: {
         default: "p-6",
-        compact: "p-4", 
+        compact: "p-4",
         spacious: "p-8",
         minimal: "p-3"
       }
@@ -264,7 +264,7 @@ const cardTitleVariants = cva(
     variants: {
       size: {
         sm: "text-lg",
-        md: "text-xl", 
+        md: "text-xl",
         lg: "text-2xl",
         xl: "text-3xl"
       },
@@ -328,7 +328,7 @@ const cardContentVariants = cva(
       variant: {
         default: "p-6 pt-0",
         compact: "p-4 pt-0",
-        spacious: "p-8 pt-0", 
+        spacious: "p-8 pt-0",
         minimal: "p-3 pt-0",
         flush: "p-0"
       }
@@ -372,7 +372,7 @@ const cardFooterVariants = cva(
       },
       justify: {
         start: "justify-start",
-        center: "justify-center", 
+        center: "justify-center",
         end: "justify-end",
         between: "justify-between",
         around: "justify-around"
@@ -408,7 +408,7 @@ CardFooter.displayName = "CardFooter";
 // Special Card Components - FIXED: Proper typing
 interface FeatureCardProps extends CardProps {
   icon?: React.ReactNode;
-  }
+}
 
 const FeatureCard = React.forwardRef<HTMLDivElement, FeatureCardProps>(
   ({ icon, children, className, ...props }, ref) => (
@@ -441,8 +441,8 @@ FeatureCard.displayName = "FeatureCard";
 
 // Stat Card - FIXED: Proper typing
 interface StatCardProps extends CardProps {
-  value: string | number; 
-  label: string; 
+  value: string | number;
+  label: string;
   trend?: "up" | "down" | "neutral";
   trendValue?: string;
 }
@@ -471,7 +471,7 @@ const StatCard = React.forwardRef<HTMLDivElement, StatCardProps>(
           <div className={cn(
             "text-xs font-medium",
             trend === "up" && "text-success",
-            trend === "down" && "text-destructive", 
+            trend === "down" && "text-destructive",
             trend === "neutral" && "text-muted-foreground"
           )}>
             {trend === "up" && "↗ "}
@@ -485,12 +485,12 @@ const StatCard = React.forwardRef<HTMLDivElement, StatCardProps>(
 );
 StatCard.displayName = "StatCard";
 
-export { 
-  Card, 
-  CardHeader, 
-  CardFooter, 
-  CardTitle, 
-  CardDescription, 
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
   CardContent,
   FeatureCard,
   StatCard,

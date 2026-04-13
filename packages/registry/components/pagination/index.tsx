@@ -105,6 +105,7 @@ export const Pagination = React.memo(function Pagination({
             onClick={() => onPageChange(pageNumber as number)}
             disabled={pageNumber === currentPage}
             aria-current={pageNumber === currentPage ? "page" : undefined}
+            aria-label={`Page ${pageNumber}`}
           >
             {pageNumber}
           </Button>

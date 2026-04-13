@@ -24,7 +24,7 @@ export const DebugBox: React.FC<DebugBoxProps> = ({
     defaultShowDimensions = true,
 }) => {
     if (process.env.NODE_ENV === "production") {
-        return <>{children}</>; // Production me sirf children
+        return <>{children}</>;
     }
 
     const containerRef = useRef<HTMLDivElement>(null);
