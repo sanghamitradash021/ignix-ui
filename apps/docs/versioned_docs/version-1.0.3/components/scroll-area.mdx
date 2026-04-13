@@ -401,6 +401,9 @@ const ScrollArea = React.forwardRef<
                     ref={setViewportRef}
                     className={cn("h-full w-full rounded-[inherit]", overflowClass)}
                     style={viewportMaskStyle}
+                    tabIndex={0}
+                    role="region"
+                    aria-label={props["aria-label"] || "scrollable content"}
                 >
                     {anim ? (
                         <AnimatePresence mode="wait">
