@@ -238,6 +238,7 @@
               "items": [
                 "templates/pages/dashboard/dashboard-overview-page",
                 "templates/pages/dashboard/analytics-dashboard-page",
+                "templates/pages/dashboard/activity-feed-page",
                 "templates/pages/dashboard/dashboard-shortcuts-page"
               ]
             },
