@@ -1,5 +1,11 @@
 # @mindfiredigital/ignix-cli
 
+## 2.1.0
+
+### Minor Changes
+
+- Merge pull request #771 from mindfiredigital/development
+
 ## 2.0.0
 
 ### Major Changes
