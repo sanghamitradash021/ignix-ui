@@ -1,0 +1,204 @@
+{
+  "name": "ignix-ui",
+  "version": "0.1.0",
+  "description": "MCP tool definitions for Ignix UI CLI - A React component library with 90+ components, 200+ themes, and 20+ templates",
+  "aiNative": true,
+  "metadata": {
+    "category": "ui-library",
+    "framework": "react",
+    "styling": "tailwind",
+    "isGrowing": true,
+    "totalComponents": "DYNAMIC (use list_components to get current count)",
+    "totalThemes": "DYNAMIC (use list_themes to get current count)",
+    "totalTemplates": "DYNAMIC (use list_templates to get current count)",
+    "lastUpdated": "Continuous - new assets added regularly"
+  },
+  "instructions": {
+    "forAI": "IMPORTANT: This library is CONSTANTLY GROWING. Never assume you know all available components/themes/templates. ALWAYS use the list/search tools FIRST to discover what's available at the moment.",
+    "discoveryFirst": "Before suggesting any component, theme, or template, ALWAYS call the appropriate list/search tool to check current availability. Do NOT rely on memory or documentation alone.",
+    "growthMindset": "New components, themes, and templates are added regularly. What was available last week may have expanded this week. Always discover first, then act.",
+    "workflow": {
+      "goldenRule": "DISCOVER → PLAN → INSTALL → BUILD",
+      "initialization": "Always check if ignix.config.js exists. If not, call init_project first.",
+      "discovery": "BEFORE any installation, ALWAYS call search_components or list_components to verify component existence. NEVER guess component names.",
+      "installation": "ALWAYS use install_component for adding components. NEVER create component files manually.",
+      "theming": "BEFORE installing a theme, ALWAYS call list_themes to see current available themes.",
+      "templates": "For complete pages, ALWAYS call list_templates first to see available templates.",
+      "emptyDirectory": {
+        "detection": "ALWAYS check if the current directory is empty or doesn't contain a React project (no package.json or package.json without react dependency).",
+        "action": "If directory is empty or no React project detected, ALWAYS run create_react_project FIRST, THEN init_project, THEN proceed with the requested installation.",
+        "example": "For 'build me a landing page' in empty folder: 1. create_react_project({ projectName: 'gym-landing' }) → 2. init_project({ cwd: './gym-landing' }) → 3. search_templates for 'landing' to find page templates → 4. install_template with templates (hero, callToAction) → 5. search_components for UI elements → 6. install_component with components (navbar, button, card, footer)"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "create_react_project",
+      "description": "[PROJECT CREATION] Creates a new React + TypeScript + Tailwind CSS project using Vite.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["projectName"],
+        "properties": {
+          "projectName": {
+            "type": "string"
+          },
+          "cwd": {
+            "type": "string",
+            "default": "."
+          },
+          "packageManager": {
+            "type": "string",
+            "enum": ["npm", "yarn", "pnpm"],
+            "default": "npm"
+          }
+        }
+      },
+      "execution": {
+        "type": "shell",
+        "command": "cd {cwd} && npm create vite@latest {projectName} -- --template react-ts && cd {projectName} && npm install && npm install -D tailwindcss postcss autoprefixer && npx tailwindcss init -p && echo '@tailwind base; @tailwind components; @tailwind utilities;' > src/index.css"
+      }
+    },
+    {
+      "name": "list_components",
+      "description": "[DISCOVERY] Returns paginated list of available components (15 per page).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "page": {
+            "type": "number",
+            "default": 1
+          },
+          "limit": {
+            "type": "number",
+            "default": 15
+          }
+        }
+      },
+      "execution": {
+        "type": "shell",
+        "command": "ignix list component --json"
+      }
+    },
+    {
+      "name": "add_component",
+      "description": "[INSTALLATION] Installs Ignix UI components to your project.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["components"],
+        "properties": {
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cwd": {
+            "type": "string",
+            "default": "."
+          }
+        }
+      },
+      "execution": {
+        "type": "shell",
+        "command": "ignix add component {components} --yes --json --cwd {cwd}"
+      }
+    },
+    {
+      "name": "generate_template",
+      "description": "[PAGE GENERATION] Generates a complete page template using Ignix UI components.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["page"],
+        "properties": {
+          "page": {
+            "type": "string"
+          },
+          "theme": {
+            "type": "string"
+          },
+          "cwd": {
+            "type": "string",
+            "default": "."
+          }
+        }
+      },
+      "execution": {
+        "type": "shell",
+        "command": "node -e \"const fs=require('fs'); const path=require('path'); const page='{page}'; const theme='{theme}'; const dir=path.join('{cwd}','src','pages'); if(!fs.existsSync(dir))fs.mkdirSync(dir,{recursive:true}); const content=`import React from 'react';\\n${theme ? `import { ThemeProvider } from '../themes/ThemeProvider';\\n` : ''}\\nconst ${page.charAt(0).toUpperCase()+page.slice(1)}Page: React.FC = () => {\\n  return (\\n    ${theme ? `<ThemeProvider theme=\"${theme}\">\\n` : ''}    <div className=\"container mx-auto px-4\">\\n      <h1>${page} Page</h1>\\n    </div>\\n    ${theme ? '</ThemeProvider>' : ''}\\n  );\\n};\\n\\nexport default ${page.charAt(0).toUpperCase()+page.slice(1)}Page;`; fs.writeFileSync(path.join(dir,`${page}.tsx`),content); console.log(JSON.stringify({success:true,pagePath:path.join(dir,`${page}.tsx`)}));\""
+      }
+    },
+    {
+      "name": "validate_ignix_only",
+      "description": "[VALIDATION] Scans codebase to ensure only Ignix UI components are used. Rejects shadcn, MUI, Chakra, AntD.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "default": "src"
+          },
+          "cwd": {
+            "type": "string",
+            "default": "."
+          }
+        }
+      },
+      "execution": {
+        "type": "shell",
+        "command": "node -e \"const fs=require('fs'); const path=require('path'); const patterns=[/@shadcn\\/ui/,/@mui\\/material/,/@chakra-ui/,/@ant-design/]; let violations=[]; function scan(dir){if(!fs.existsSync(dir))return; const files=fs.readdirSync(dir); for(const file of files){const filePath=path.join(dir,file); if(fs.statSync(filePath).isDirectory()){if(!['node_modules','.next','dist','build'].includes(file))scan(filePath);}else if(/\\.(tsx?|jsx?)$/.test(file)){const content=fs.readFileSync(filePath,'utf8'); for(const pattern of patterns){if(pattern.test(content)){violations.push(filePath+': '+pattern.source);}}}}} scan(path.join('{cwd}','{path}')); console.log(JSON.stringify({success:violations.length===0,valid:violations.length===0,violations,count:violations.length,classification:violations.length?'VALIDATION_FAILED':'VALIDATION_PASSED',action:violations.length?'Replace these imports with Ignix UI components':null}));\""
+      }
+    },
+    {
+      "name": "get_component_docs",
+      "description": "[DOCUMENTATION] Fetches live documentation for a component on-demand. Token-efficient.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["component"],
+        "properties": {
+          "component": {
+            "type": "string"
+          }
+        }
+      },
+      "execution": {
+        "type": "shell",
+        "command": "node -e \"fetch(`https://mindfiredigital.github.io/ignix-ui/api/docs/{component}.json`).then(r=>r.ok?r.json():Promise.reject()).then(docs=>console.log(JSON.stringify({success:true,component:'{component}',docs:{description:docs.description,props:docs.props,examples:docs.examples,usage:docs.usage},tokenCount:Math.ceil(JSON.stringify(docs).length/4)}))).catch(()=>console.log(JSON.stringify({success:false,error:'Documentation not found',classification:'DOCS_NOT_FOUND',action:'Use list_components to verify component exists'})))\""
+      }
+    }
+  ],
+  "resources": [
+    {
+      "name": "component_registry",
+      "uri": "file://../../packages/registry/registry.json",
+      "description": "Machine-readable component registry containing all available components"
+    },
+    {
+      "name": "documentation",
+      "uri": "docs://llms.txt",
+      "description": "AI-readable documentation with usage guidelines, workflows, and examples"
+    },
+    {
+      "name": "ignix-rules",
+      "uri": "resources://ignix-rules",
+      "description": "Strict enforcement rules for Ignix UI (under 200 tokens)"
+    },
+    {
+      "name": "component-registry-summary",
+      "uri": "registry://summary",
+      "description": "Summary of available components from the registry",
+      "mimeType": "application/json"
+    }
+  ],
+  "capabilities": {
+    "supportsNonInteractive": true,
+    "requiresNetwork": true,
+    "outputFormats": ["json"],
+    "autoTrigger": true,
+    "intentDetection": true,
+    "toolChaining": true,
+    "evergreen": true
+  }
+}

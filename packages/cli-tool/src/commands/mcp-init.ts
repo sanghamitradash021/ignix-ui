@@ -1,199 +1,217 @@
+// packages/ignix-mcp-server/src/commands/mcp-init.ts
 import { Command } from 'commander';
 import fs from 'fs-extra';
 import path from 'path';
 import { execa } from 'execa';
+import chalk from 'chalk';
+import type {
+  MCPServerConfig,
+  CursorClaudeConfig,
+  VSCodeConfig,
+  PackageJson,
+  MCPClientConfig,
+} from '../types/index.js';
+import { getErrorMessage } from '../utils/error-handler.js';
 
-type Client = 'cursor' | 'vscode' | 'claude' | 'codex';
-
-type MCPServerConfig = {
-  command: string;
-  args: string[];
-};
-
-type CursorClaudeConfig = {
-  mcpServers: Record<string, MCPServerConfig>;
-};
-
-type VSCodeConfig = {
-  servers: Record<string, MCPServerConfig>;
-};
-
-type PackageJson = {
-  name?: string;
-  private?: boolean;
-  dependencies?: Record<string, string>;
-};
+type Client = 'cursor' | 'vscode' | 'claude' | 'windsurf' | 'codex';
 
 const IGNIX_PACKAGE = '@mindfiredigital/ignix-ui';
 const IGNIX_VERSION = '^1.0.7';
+const VALID_CLIENTS: Client[] = ['cursor', 'vscode', 'claude', 'windsurf', 'codex'];
 
 async function detectPackageManager(): Promise<'npm' | 'yarn' | 'pnpm'> {
-  if (await fs.exists('pnpm-lock.yaml')) return 'pnpm';
-  if (await fs.exists('yarn.lock')) return 'yarn';
+  if (await fs.pathExists('pnpm-lock.yaml')) return 'pnpm';
+  if (await fs.pathExists('yarn.lock')) return 'yarn';
   return 'npm';
+}
+
+function getConfigPath(client: Client): string {
+  const paths: Record<Client, string> = {
+    cursor: '.cursor/mcp.json',
+    vscode: '.vscode/mcp.json',
+    claude: '.mcp.json',
+    windsurf: '.windsurf/mcp.json',
+    codex: '', // Codex requires manual setup
+  };
+  return paths[client];
+}
+
+function getConfigContent(
+  client: Client,
+  server: MCPServerConfig
+): CursorClaudeConfig | VSCodeConfig {
+  if (client === 'vscode') {
+    return { servers: { ignix: server } };
+  }
+  return { mcpServers: { ignix: server } };
 }
 
 export const mcpInitCommand = new Command()
   .name('init')
   .description('Initialize MCP configuration for AI tools')
-  .requiredOption('--client <client>', 'MCP client (cursor, vscode, claude, codex)')
+  .option('--client <client>', 'MCP client (cursor, vscode, claude, windsurf, codex)')
+  .option('--dry-run', 'Preview changes without writing files')
+  .option('--latest', 'Use latest version instead of pinned major version')
+  .option('--universal', 'Configure all supported clients')
   .action(async (opts) => {
-    const client: Client = opts.client;
+    if (process.env.MCP_INIT_RUNNING) {
+      return;
+    }
+    process.env.MCP_INIT_RUNNING = 'true';
 
-    let configPath = '';
-
-    switch (client) {
-      case 'cursor':
-        configPath = path.resolve('.cursor/mcp.json');
-        break;
-      case 'vscode':
-        configPath = path.resolve('.vscode/mcp.json');
-        break;
-      case 'claude':
-        configPath = path.resolve('.mcp.json');
-        break;
-      case 'codex':
-        console.log('\n⚠️ Codex requires manual setup.\n');
-        console.log(`[mcp_servers.ignix]
-command = "npx"
-args = ["ignix", "mcp"]\n`);
-        return;
-      default:
-        console.error('❌ Unsupported MCP client:', client);
-        process.exit(1);
+    // VALIDATION: Check if either --client or --universal is provided
+    if (!opts.client && !opts.universal) {
+      console.error(chalk.red('❌ Error: Either --client or --universal is required'));
+      console.log(chalk.gray('\nExamples:'));
+      console.log(chalk.gray('  npx ignix mcp init --universal'));
+      console.log(chalk.gray('  npx ignix mcp init --client cursor'));
+      console.log(chalk.gray('  npx ignix mcp init --client vscode --dry-run'));
+      process.exit(1);
     }
 
-    // =========================
-    // 📦 PACKAGE.JSON
-    // =========================
-    const packageJsonPath = path.resolve('package.json');
-
-    let packageJson: PackageJson = {};
-    let shouldInstall = false;
-
-    const exists = await fs.exists(packageJsonPath);
-
-    if (!exists) {
-      packageJson = {
-        name: path.basename(process.cwd()),
-        private: true,
-        dependencies: {},
-      };
-      shouldInstall = true;
-    } else {
-      try {
-        packageJson = await fs.readJSON(packageJsonPath);
-      } catch {
-        packageJson = {};
-      }
+    if (opts.client === 'all') {
+      opts.universal = true;
+      opts.client = null;
     }
 
-    if (!packageJson.dependencies) {
-      packageJson.dependencies = {};
+    // VALIDATION: Check if client is valid when provided
+    if (opts.client && !VALID_CLIENTS.includes(opts.client as Client)) {
+      console.error(chalk.red(`❌ Error: Invalid client '${opts.client}'`));
+      console.log(chalk.gray(`\nValid clients: ${VALID_CLIENTS.join(', ')}`));
+      console.log(chalk.gray(`\nOr use --universal to configure all clients`));
+      process.exit(1);
     }
 
-    // Only add if not present
-    if (!packageJson.dependencies[IGNIX_PACKAGE]) {
-      packageJson.dependencies[IGNIX_PACKAGE] = IGNIX_VERSION;
-      shouldInstall = true;
+    // Handle 'all' as alias for '--universal'
+    if (opts.client === 'all') {
+      opts.universal = true;
+      opts.client = null;
     }
 
-    if (shouldInstall) {
-      await fs.writeJSON(packageJsonPath, packageJson, { spaces: 2 });
-    }
+    const clients: Client[] = opts.universal
+      ? ['cursor', 'vscode', 'claude', 'windsurf']
+      : [opts.client as Client];
 
-    // =========================
-    // ⚙️ MCP CONFIG
-    // =========================
+    const versionPin = opts.latest ? 'latest' : '^1';
+
+    // FIX: Always include '-y' for all clients
     const ignixServer: MCPServerConfig = {
       command: 'npx',
-      args: ['ignix', 'mcp'],
+      args: ['-y', `@mindfiredigital/ignix-mcp-server@${versionPin}`],
     };
 
-    await fs.ensureDir(path.dirname(configPath));
-
-    let shouldWriteConfig = true;
-
-    if (client === 'vscode') {
-      const existing: VSCodeConfig = { servers: {} };
-
-      if (await fs.exists(configPath)) {
-        const data = (await fs.readJSON(configPath)) as VSCodeConfig;
-        existing.servers = data.servers ?? {};
-
-        if (existing.servers.ignix) {
-          shouldWriteConfig = false;
+    if (opts.dryRun) {
+      console.log(chalk.yellow('\n🔍 DRY RUN - No files will be written\n'));
+      for (const client of clients) {
+        const configPath = getConfigPath(client);
+        if (!configPath) {
+          console.log(chalk.yellow(`⚠️  ${client} requires manual setup`));
+          if (client === 'codex') {
+            console.log(chalk.gray(`   [mcp_servers.ignix]`));
+            console.log(chalk.gray(`   command = "npx"`));
+            console.log(
+              chalk.gray(`   args = ["-y", "@mindfiredigital/ignix-mcp-server@${versionPin}"]\n`)
+            );
+          }
+          continue;
         }
+        console.log(chalk.cyan(`\n📝 ${client}:`));
+        console.log(chalk.gray(`   Would create/update: ${configPath}`));
+        console.log(chalk.gray(`   Content:`));
+        console.log(JSON.stringify(getConfigContent(client, ignixServer), null, 2));
+        console.log('');
       }
+      console.log(chalk.gray('✨ Run without --dry-run to apply changes\n'));
 
-      if (shouldWriteConfig) {
-        await fs.writeJSON(
-          configPath,
-          {
-            servers: {
-              ...existing.servers,
-              ignix: ignixServer,
-            },
-          },
-          { spaces: 2 }
-        );
-      }
-    } else {
-      const existing: CursorClaudeConfig = { mcpServers: {} };
+      delete process.env.MCP_INIT_RUNNING;
 
-      if (await fs.exists(configPath)) {
-        const data = (await fs.readJSON(configPath)) as CursorClaudeConfig;
-        existing.mcpServers = data.mcpServers ?? {};
-
-        if (existing.mcpServers.ignix) {
-          shouldWriteConfig = false;
-        }
-      }
-
-      if (shouldWriteConfig) {
-        await fs.writeJSON(
-          configPath,
-          {
-            mcpServers: {
-              ...existing.mcpServers,
-              ignix: ignixServer,
-            },
-          },
-          { spaces: 2 }
-        );
-      }
+      return;
     }
 
-    // =========================
-    // 📦 INSTALL (ONLY IF NEEDED)
-    // =========================
-    console.log('✔ Configuring MCP server.');
-    console.log('✔ Installing dependencies.\n');
+    console.log(chalk.bold('\n🚀 Initializing Ignix MCP Server\n'));
+    console.log(
+      chalk.cyan(
+        `Version pin: ${
+          versionPin === 'latest' ? 'latest (unpinned)' : '^1 (pinned major version)'
+        }\n`
+      )
+    );
 
-    if (shouldInstall) {
-      try {
-        const pm = await detectPackageManager();
+    for (const client of clients) {
+      const configPath = getConfigPath(client);
 
-        if (pm === 'pnpm') {
-          await execa('pnpm', ['install'], { stdio: 'ignore' });
-        } else if (pm === 'yarn') {
-          await execa('yarn', [], { stdio: 'ignore' });
-        } else {
-          await execa('npm', ['install', '--silent', '--no-audit', '--no-fund'], {
-            stdio: 'ignore',
-          });
+      if (!configPath) {
+        if (client === 'codex') {
+          console.log(chalk.yellow(`\n⚠️ Codex requires manual setup:`));
+          console.log(
+            chalk.gray(`[mcp_servers.ignix]\ncommand = "npx"\nargs = ["-y", "ignix", "mcp"]\n`)
+          );
         }
-      } catch (error) {
-        if (process.env.DEBUG) {
-          console.error(error);
-        }
+        continue;
       }
+
+      await configureClient(client, configPath, ignixServer);
     }
 
-    // =========================
-    // 🎉 OUTPUT
-    // =========================
-    const relativePath = path.relative(process.cwd(), configPath).replace(/\\/g, '/');
+    // Update package.json if needed
+    await updatePackageJson();
 
-    console.log(`Configuration saved to ${relativePath}.\n`);
+    console.log(chalk.green('\n✅ MCP configuration complete!'));
+    console.log(chalk.gray('\nRestart your AI tool to start using Ignix UI.\n'));
   });
+
+async function configureClient(
+  client: Client,
+  configPath: string,
+  server: MCPServerConfig
+): Promise<void> {
+  const fullPath = path.resolve(configPath);
+  await fs.ensureDir(path.dirname(fullPath));
+
+  let existingConfig: MCPClientConfig = {};
+  if (await fs.pathExists(fullPath)) {
+    existingConfig = await fs.readJSON(fullPath);
+  }
+
+  const newConfig = {
+    ...existingConfig,
+    ...getConfigContent(client, server),
+  };
+
+  await fs.writeJSON(fullPath, newConfig, { spaces: 2 });
+  console.log(chalk.green(`✅ Configured ${client} at ${configPath}`));
+}
+
+async function updatePackageJson(): Promise<void> {
+  const packageJsonPath = path.resolve('package.json');
+
+  if (!(await fs.pathExists(packageJsonPath))) {
+    console.log(chalk.yellow('⚠️ No package.json found, skipping dependency installation'));
+    return;
+  }
+
+  try {
+    const packageJson = (await fs.readJSON(packageJsonPath)) as PackageJson;
+
+    if (!packageJson.dependencies?.[IGNIX_PACKAGE]) {
+      packageJson.dependencies = packageJson.dependencies || {};
+      packageJson.dependencies[IGNIX_PACKAGE] = IGNIX_VERSION;
+      await fs.writeJSON(packageJsonPath, packageJson, { spaces: 2 });
+
+      console.log(chalk.blue('📦 Installing dependencies...'));
+      const pm = await detectPackageManager();
+
+      if (pm === 'pnpm') {
+        await execa('pnpm', ['install'], { stdio: 'ignore' });
+      } else if (pm === 'yarn') {
+        await execa('yarn', [], { stdio: 'ignore' });
+      } else {
+        await execa('npm', ['install', '--silent', '--no-audit', '--no-fund'], { stdio: 'ignore' });
+      }
+
+      console.log(chalk.green('✅ Dependencies installed'));
+    }
+  } catch (error) {
+    console.log(chalk.yellow(`⚠️ Failed to update package.json: ${getErrorMessage(error)}`));
+  }
+}

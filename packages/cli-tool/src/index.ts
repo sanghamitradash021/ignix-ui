@@ -14,9 +14,9 @@ import {
 import { logger } from './utils/logger';
 import { RegistryService } from './services/RegistryService';
 import { templateCommand } from './commands/template';
-import { startMcpServer } from './commands/mcp';
-import { mcpInitCommand } from './commands/mcp-init';
 import { infoCommand } from './commands/info'; // Add this import
+import { mcpInitCommand } from './commands/mcp-init';
+import { mcpStatusCommand } from './commands/mcp-status';
 
 const program = new Command();
 
@@ -38,26 +38,61 @@ program.addCommand(infoCommand);
 
 const mcpCommand = new Command('mcp').description('Ignix MCP server');
 
-// default: start server
-mcpCommand.action(async () => {
-  await startMcpServer();
-});
+// // default: start server
+// mcpCommand.action(async () => {
+//   await startMcpServer();
+// });
 
 // init command
 mcpCommand
   .command('init')
-  .requiredOption('--client <client>')
-  .action(async (opts) => {
-    await mcpInitCommand.parseAsync(['node', 'ignix', '--client', opts.client]);
+  .description('Initialize MCP configuration')
+  .option('--client <client>', 'MCP client (cursor, vscode, claude, windsurf, all)')
+  .option('--dry-run', 'Preview changes without writing files')
+  .option('--latest', 'Use latest version instead of pinned major version')
+  .option('--universal', 'Configure all supported clients')
+  .action(async (options) => {
+    // Parse the command with the options
+    const args = ['node', 'ignix', 'mcp', 'init'];
+
+    if (options.client) {
+      args.push('--client', options.client);
+    }
+    if (options.dryRun) {
+      args.push('--dry-run');
+    }
+    if (options.latest) {
+      args.push('--latest');
+    }
+    if (options.universal) {
+      args.push('--universal');
+    }
+
+    await mcpInitCommand.parseAsync(args);
   });
 
-// optional explicit start command
+// status command
 mcpCommand
-  .command('start')
-  .description('Start Ignix MCP server')
-  .action(async () => {
-    await startMcpServer();
+  .command('status')
+  .description('Check MCP configuration status')
+  .option('--json', 'Machine output')
+  .action(async (options) => {
+    const args = ['node', 'ignix', 'mcp', 'status'];
+
+    if (options.json) {
+      args.push('--json');
+    }
+
+    await mcpStatusCommand.parseAsync(args);
   });
+
+// explicit start command (optional)
+// mcpCommand
+//   .command('start')
+//   .description('Start Ignix MCP server')
+//   .action(async () => {
+//     await startMcpServer();
+//   });
 
 program.addCommand(mcpCommand);
 
@@ -81,8 +116,8 @@ ${chalk.hex('#FFD5D5').bold('  ╚═╝ ╚═════╝ ╚═╝  ╚═
 async function startInteractiveCLI(): Promise<void> {
   showWelcome();
 
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
+  let isRunning = true;
+  while (isRunning) {
     try {
       const response = await prompts({
         type: 'select',
@@ -94,6 +129,7 @@ async function startInteractiveCLI(): Promise<void> {
           { title: chalk.hex('#FF6B35')('📋 List components'), value: 'list' },
           { title: chalk.hex('#FF7F50')('🎨 Manage themes'), value: 'themes' },
           { title: chalk.hex('#33A06F')('📦 Starters Template'), value: 'starters' },
+          { title: chalk.hex('#FF4444')('🔌 MCP Server'), value: 'mcp' },
           { title: chalk.red('❌ Exit'), value: 'exit' },
         ],
         initial: 0,
@@ -101,6 +137,7 @@ async function startInteractiveCLI(): Promise<void> {
 
       if (!response.action || response.action === 'exit') {
         console.log(chalk.yellow('\n👋 Exiting Ignix CLI. Goodbye!\n'));
+        isRunning = false;
         process.exit(0);
       }
 
@@ -123,7 +160,7 @@ async function startInteractiveCLI(): Promise<void> {
           }
 
           const response = await prompts({
-            type: 'select',
+            type: 'multiselect',
             name: 'components',
             message: 'Select components to add:',
             choices: availableComponents.map((c: any) => ({
@@ -177,6 +214,48 @@ async function startInteractiveCLI(): Promise<void> {
         }
         case 'templates': {
           await templateCommand.parseAsync(['node', 'ignix', 'templates']);
+          break;
+        }
+        case 'mcp': {
+          const mcpResponse = await prompts({
+            type: 'select',
+            name: 'action',
+            message: 'MCP Configuration:',
+            choices: [
+              { title: 'Configure MCP for all clients', value: 'universal' },
+              { title: 'Configure MCP for specific client', value: 'specific' },
+              { title: 'Check MCP status', value: 'status' },
+              { title: 'Back', value: 'back' },
+            ],
+          });
+
+          if (mcpResponse.action === 'universal') {
+            await mcpInitCommand.parseAsync(['node', 'ignix', 'mcp', 'init', '--universal']);
+          } else if (mcpResponse.action === 'specific') {
+            const clientResponse = await prompts({
+              type: 'select',
+              name: 'client',
+              message: 'Select client:',
+              choices: [
+                { title: 'Cursor', value: 'cursor' },
+                { title: 'VS Code', value: 'vscode' },
+                { title: 'Claude Desktop', value: 'claude' },
+                { title: 'Windsurf', value: 'windsurf' },
+              ],
+            });
+            if (clientResponse.client) {
+              await mcpInitCommand.parseAsync([
+                'node',
+                'ignix',
+                'mcp',
+                'init',
+                '--client',
+                clientResponse.client,
+              ]);
+            }
+          } else if (mcpResponse.action === 'status') {
+            await mcpStatusCommand.parseAsync(['node', 'ignix', 'mcp', 'status']);
+          }
           break;
         }
       }
