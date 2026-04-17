@@ -375,7 +375,7 @@ const ScrollArea = React.forwardRef<
                 <ScrollAreaPrimitive.Viewport
                     ref={setViewportRef}
                     className={cn("h-full w-full rounded-[inherit]", overflowClass)}
-                    style={viewportMaskStyle}
+                    style={viewportMaskStyle as React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Viewport>["style"]}
                     tabIndex={0}
                     role="region"
                     aria-label={props["aria-label"] || "scrollable content"}
@@ -502,7 +502,7 @@ const ScrollBar = React.forwardRef<
                     getTrackClasses(orientation, variant, size, expandOnHover),
                     className
                 )}
-                {...props}
+                {...(props as unknown as HTMLMotionProps<"div">)}
             >
                 <ScrollAreaPrimitive.ScrollAreaThumb className={getThumbClasses(variant)} />
             </motion.div>
