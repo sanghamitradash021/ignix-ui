@@ -5,7 +5,7 @@ import path from 'path';
 import chalk from 'chalk';
 import semver from 'semver';
 import type { ClientStatus, NpmRegistryResponse } from '../types/index.js';
-import { getErrorMessage } from '../utils/error-handler.js';
+import { getErrorMessage } from '../utils/error-handler';
 
 async function getLatestVersion(): Promise<string | null> {
   try {
