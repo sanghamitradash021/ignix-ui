@@ -11,7 +11,7 @@ import type {
   PackageJson,
   MCPClientConfig,
 } from '../types/index.js';
-import { getErrorMessage } from '../utils/error-handler.js';
+import { getErrorMessage } from '../utils/error-handler';
 
 type Client = 'cursor' | 'vscode' | 'claude' | 'windsurf' | 'codex';
 
