@@ -1,6 +1,6 @@
 {
   "name": "@mindfiredigital/ignix-cli",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "private": false,
   "description": "CLI tool for the Ignix UI component library",
   "type": "commonjs",
