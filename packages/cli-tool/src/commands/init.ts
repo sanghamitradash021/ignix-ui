@@ -277,21 +277,21 @@ async function setupIgnixUIAlias(): Promise<void> {
   if (!(await fs.pathExists(webpackAliasFile))) {
     const pluginCode = `import path from 'path';
 
-      export default function webpackAliasPlugin() {
-        return {
-          name: 'webpack-alias-plugin',
-          configureWebpack() {
-            return {
-              resolve: {
-                alias: {
-                  '@ignix-ui': path.resolve(process.cwd(), 'node_modules/@mindfiredigital/ignix-ui/components'),
-                },
-              },
-            };
+export default function webpackAliasPlugin() {
+  return {
+    name: 'webpack-alias-plugin',
+    configureWebpack() {
+      return {
+        resolve: {
+          alias: {
+            '@ignix-ui': path.resolve(process.cwd(), 'node_modules/@mindfiredigital/ignix-ui/components'),
           },
-        };
-      }
-      `;
+        },
+      };
+    },
+  };
+}
+`;
     await fs.writeFile(webpackAliasFile, pluginCode, 'utf8');
     logger.success('✔ Created plugins/webpack-alias.ts');
   } else {
@@ -303,12 +303,13 @@ async function createUtilsFile() {
   const utilsPath = path.resolve('src/utils/cn.ts');
   if (await fs.pathExists(utilsPath)) return;
 
-  const content = `import { clsx, type ClassValue } from 'clsx'
-  import { twMerge } from 'tailwind-merge'
-  
-  export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs))
-  }`;
+  const content = `import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+`;
 
   await fs.writeFile(utilsPath, content);
 }
